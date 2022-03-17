@@ -3,148 +3,116 @@ package model;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
-import java.util.LinkedList;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
- * @authors Emeline BONTE, Ghilain BERGERON, Khaled SADEGH
- * @version 1.1
+ * @author Émeline BONTE, Ghilain BERGERON, Khaled SADEGH
+ * @version 1.2
  */
+public final class MLOProblem implements Closeable {
+    private final LpSolve solver;
 
-public class MLOProblem {
-    private LinkedList<String> values;
-    private LinkedList<String> B;
-    private LinkedList<Integer> types;
-    private String objFun;
-    private int nbVar;
-    public static Integer LE = LpSolve.LE;
-    public static Integer EQ = LpSolve.EQ;
-    public static Integer GE = LpSolve.GE;
+    public static final int EQ = LpSolve.EQ;
+    public static final int LE = LpSolve.LE;
+    public static final int GE = LpSolve.GE;
 
     /**
-     * @author Raphaël Bagat
-     * Constructor.
-     * @param nbVar Nombre de variables du problème.
+     * Crée un nouveau problème d'optimisation linéaire en nombres mixtes avec le nombre de variables donné.
+     *
+     * @param nbVars le nombre de variables dans le problème
+     * @throws LpSolveException
      */
-    public MLOProblem(int nbVar){
-        assert(nbVar>=0):"";
-        values = new LinkedList<>();
-        B = new LinkedList<>();
-        types = new LinkedList<>();
-        this.nbVar = nbVar;
+    public MLOProblem(final int nbVars) throws LpSolveException {
+        assert (nbVars >= 0);
+
+        this.solver = LpSolve.makeLp(0, nbVars);
+        this.solver.setVerbose(0);
     }
 
     /**
-     * @author Raphaël Bagat
-     * Ajout d'une contrainte au problème.
-     * @param values A String that contains the value of the row. Format: v1 v2 v3 ...
-     * @param type The type of the constraint. (Less than or equal LE, Equal EQ, Greater than or equal GE)
-     * @param b A String that contains the value of the right hand side.
+     * Ajoute une contrainte au problème d'optimisation linéaire en nombres mixtes.
+     *
+     * @param row      la description de la partie gauche de la contrainte, sous la forme <code>c_1 c_2 ... c_n</code>
+     *                 où les <code>c_i</code> sont les coefficients devant les variables.
+     *                 <p>
+     *                 Si une variable n'est pas présente dans la contrainte, un coefficient de <code>0</code> doit être indiqué.
+     * @param ineqType le type d'égalité de l'équation, entre {@link #GE}, {@link #LE} et {@link #EQ}.
+     * @param b        la valeur à droite de l'équation
+     * @return la nouvelle instance du problème
+     * @throws LpSolveException
      */
-    public void addConstraint(String values, int type, String b){
-        B.addLast(b);
-        this.values.addLast(values);
-        types.addLast(type);
+    public MLOProblem withConstraint(final String row, final int ineqType, final String b) throws LpSolveException {
+        assert(ineqType == LE || ineqType == GE || ineqType == EQ);
+
+        this.solver.strAddConstraint(row, ineqType, Double.parseDouble(b));
+        return this;
     }
 
     /**
-     * @author Raphaël Bagat
-     * Sets the objective function of the problem.
-     * @param objFun A String that contains the value of the row.
+     * Ajoute la ligne correspondant au calcul de la fonction objectif.
+     *
+     * @param row la description des coefficients de la fonction objectif sous la forme <code>c_1 c_2 ... c_n</code>
+     *            <p>
+     *            Si une variable n'est pas présente dans la fonction objectif, un coefficient de <code>0</code>
+     *            doit être indiqué.
+     * @return la nouvelle instance du problème
+     * @throws LpSolveException
      */
-    public void setObjFun(String objFun){
-        this.objFun = objFun;
+    public MLOProblem withObjective(final String row) throws LpSolveException {
+        this.solver.strSetObjFn(row);
+        return this;
     }
 
     /**
-     * @author Raphaël Bagat
-     * Gets the values of the constraints in a LinkedList. Format: v1 v2 v3 ...
-     * @return The values of the constraints in a LinkedList. Format: v1 v2 v3 ...
+     * Indique les types des variables du problème d'optimisation linéaire en nombres mixtes.
+     *
+     * @param types les types de toutes les variables du problème
+     *              <p>
+     *              Attention, les types doivent être renseignés pour TOUTES les variables du système.
+     * @return la nouvelle instance du problème
+     * @throws LpSolveException
+     * @implNote si cette fonction n'est pas appelée, toutes les variables sont supposées réelles.
      */
-    public LinkedList<String> getValues() {
-        return values;
-    }
+    public MLOProblem withVarTypes(final VarType... types) throws LpSolveException {
+        assert (types.length == this.solver.getNcolumns());
 
-    /**
-     * @author Raphaël Bagat
-     * Gets the values of the right hand side vales.
-     * @return The values of the right hand side values.
-     */
-    public LinkedList<String> getB() {
-        return B;
-    }
-
-    /**
-     * @author Raphaël Bagat
-     * Gets the types of the constraints in a LinkedList.
-     * @return The types of the constraints in a LinkedList.
-     */
-    public LinkedList<Integer> getTypes() {
-        return types;
-    }
-
-    /**
-     * @author Raphaël Bagat
-     * Gets the objective function.
-     * @return The objective function.
-     */
-    public String getObjFun() {
-        return objFun;
-    }
-
-    /**
-     * @author Raphaël Bagat
-     * Gets the number of variables.
-     * @return The number of variables.
-     */
-    public int getNbVar() {
-        return nbVar;
-    }
-
-    /**
-     * @author Raphaël Bagat
-     * Gets the number of columns.
-     * @return The number of columns.
-     */
-    public int getNbRows(){
-        return B.size();
-    }
-
-    /**
-     * Calcul de la solution optimale du problème
-     * @return la solution optimale du problème
-     */
-    public double getSolverLpSolve(){
-        double solve = 0;
-        try {
-            // Create a problem with nbVar variables and 0 constraints
-            LpSolve solver = LpSolve.makeLp(0, this.nbVar);
-
-            // add constraints
-            for(int i = 0; i < values.size(); i++){
-                solver.strAddConstraint(this.values.get(i), this.types.get(i), Double.parseDouble(this.B.get(i)));
+        for (int i = 0; i < types.length; ++i) {
+            switch (types[i]) {
+                case INT:
+                    this.solver.setInt(i, true);
+                    break;
+                case BINARY:
+                    this.solver.setBinary(i, true);
+                    break;
+                default:
+                    // rien faire pour des variables entières
             }
-
-            // set objective function
-            solver.strSetObjFn(this.objFun);
-
-            // solve the problem
-            solver.solve();
-            solve = solver.solve();
-
-            // print solution temp
-            System.out.println("Value of objective function: " + solver.getObjective());
-            double[] var = solver.getPtrVariables();
-            for (int i = 0; i < var.length; i++) {
-                System.out.println("Value of var[" + i + "] = " + var[i]);
-            }
-
-            // delete the problem and free memory
-            solver.deleteLp();
         }
-        catch (LpSolveException e) {
-            e.printStackTrace();
-        }
-        return solve;
+        return this;
+    }
+
+    /**
+     * Résout le problème d'optimisation linéaire en nombres mixtes.
+     *
+     * @return la solution obtenue par lp_solve
+     * @throws LpSolveException
+     */
+    public double solve() throws LpSolveException {
+        this.solver.solve();
+        return this.solver.getObjective();
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.solver.deleteLp();
+    }
+
+    /**
+     * Tous les différents types de variables disponibles pour la résolution de problèmes linéaires en nombres mixtes
+     * avec lp_solve.
+     */
+    public enum VarType {
+        INT, REAL, BINARY
     }
 }
-
