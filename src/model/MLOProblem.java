@@ -1,3 +1,5 @@
+package model;
+
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
@@ -145,3 +147,4 @@ public class MLOProblem {
         return solve;
     }
 }
+
