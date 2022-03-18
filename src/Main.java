@@ -3,10 +3,10 @@ import exceptions.LignePresenteException;
 import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.MLOProblem;
+import model.simplification.Daalmans;
 import model.simplification.PivotGauss;
 
-import static model.MLOProblem.GE;
-import static model.MLOProblem.LE;
+import static model.MLOProblem.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -25,11 +25,16 @@ public class Main {
             System.out.println(system);
 
             final LCSystem gaussSystem = system.clone();
-            final LCSystem daalmansSystem = system;
+            final LCSystem daalmansSystem = system.clone();
 
             PivotGauss pg = new PivotGauss(gaussSystem);
             pg.multiplication(1, 2);
             System.out.println(pg);
+
+            System.out.println("------ Daalmans --------");
+            Daalmans daa = new Daalmans(daalmansSystem);
+            daa.run();
+            System.out.println(daalmansSystem);
         } catch (LpSolveException | LignePresenteException | LigneIdentiqueException e) {
             e.printStackTrace();
         }
