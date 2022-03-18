@@ -24,7 +24,10 @@ public class Main {
             final LCSystem system = new LCSystem(pb, solution);
             System.out.println(system);
 
-            PivotGauss pg = new PivotGauss(system);
+            final LCSystem gaussSystem = system.clone();
+            final LCSystem daalmansSystem = system;
+
+            PivotGauss pg = new PivotGauss(gaussSystem);
             pg.multiplication(1, 2);
             System.out.println(pg);
         } catch (LpSolveException | LignePresenteException | LigneIdentiqueException e) {

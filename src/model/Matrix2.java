@@ -7,12 +7,16 @@ import java.util.Iterator;
  *
  * @param <T> le type des éléments contenus dans la matrice
  */
-public class Matrix2<T> implements Iterable<T[]> {
+public class Matrix2<T> implements Iterable<T[]>, Cloneable {
     private final T[][] innerMatrix;
 
     public Matrix2(final int rowCount, final int columnCount) {
         //noinspection unchecked
         this.innerMatrix = (T[][]) new Object[rowCount][columnCount];
+    }
+
+    private Matrix2(final T[][] matrix) {
+        this.innerMatrix = matrix;
     }
 
     /**
@@ -80,5 +84,11 @@ public class Matrix2<T> implements Iterable<T[]> {
      */
     public int columnCount() {
         return this.innerMatrix[0].length;
+    }
+
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
+    public Matrix2<T> clone() {
+        return new Matrix2<>(this.innerMatrix.clone());
     }
 }

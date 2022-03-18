@@ -5,7 +5,10 @@ import lpsolve.LpSolveException;
 
 import java.util.Arrays;
 
-public class LCSystem {
+import static model.MLOProblem.GE;
+import static model.MLOProblem.LE;
+
+public class LCSystem implements Cloneable {
     /**
      * La matrice représentant le système sans les symboles d'inégalité.
      *
@@ -43,7 +46,7 @@ public class LCSystem {
         }
         this.matrix.set(0, problem.getNbVars(), sol);
 
-        this.ineqTypes[0] = LpSolve.EQ; // la première équation est l'objectif 
+        this.ineqTypes[0] = LpSolve.EQ; // la première équation est l'objectif
         for (int i = 1; i < problem.getNbConstraints() + 1; ++i) {
             this.ineqTypes[i] = problem.getConstraintType(i - 1);
         }
@@ -51,20 +54,6 @@ public class LCSystem {
         for (int i = 0; i < problem.getNbVars(); ++i) {
             this.varTypes[i] = problem.getVarType(i);
         }
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-
-        for (Double[] row : this.matrix) {
-            for (Double v : row) {
-                builder.append(v).append(" ");
-            }
-            builder.append("\n");
-        }
-
-        return builder.toString();
     }
 
     /**
@@ -77,16 +66,16 @@ public class LCSystem {
     }
 
     public void setMatrixRow(double[] values, int i, boolean signe) {
-        for (int j = 0; j < this.matrix.row(0).length; ++j) {
+        for (int j = 0; j < this.matrix.columnCount(); ++j) {
             this.matrix.set(i, j, values[j]);
         }
 
         //vérifie si changement de signe ou non
         if(signe) {
-            if(ineqTypes[i] == LpSolve.GE)
-                this.ineqTypes[i] = LpSolve.LE;
-            else if(ineqTypes[i] == LpSolve.LE)
-                this.ineqTypes[i] = LpSolve.GE;
+            if(ineqTypes[i] == GE)
+                this.ineqTypes[i] = LE;
+            else if(ineqTypes[i] == LE)
+                this.ineqTypes[i] = GE;
         }
     }
 
@@ -103,4 +92,45 @@ public class LCSystem {
         return ineqTypes;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < this.matrix.rowCount(); ++i) {
+            if (i == 0) {
+                builder.append("⎧  ");
+            } else if (i == this.matrix.rowCount() - 1) {
+                builder.append("⎩  ");
+            } else if (i == Math.floorDiv(this.matrix.rowCount(), 2)) {
+                builder.append("⎨  ");
+            } else {
+                builder.append("⎪  ");
+            }
+
+            for (int j = 0; j < this.matrix.columnCount() - 1; ++j) {
+                builder.append(String.format("% 15.7f ", this.matrix.get(i, j)));
+            }
+            
+            final int ineqType = this.ineqTypes[i];
+            builder
+                    .append(ineqType == LE ? "⩽ " : ineqType == GE ? "⩾ " : "= ")
+                    .append(String.format("% 15.7f", this.matrix.get(i, this.matrix.columnCount() - 1)))
+                    .append("\n");
+        }
+
+        return builder.toString();
+    }
+
+    @Override
+    public LCSystem clone() {
+        try {
+            LCSystem clone = (LCSystem) super.clone();
+            clone.matrix = this.matrix.clone();
+            clone.ineqTypes = this.ineqTypes.clone();
+            clone.varTypes = this.varTypes.clone();
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
 }
