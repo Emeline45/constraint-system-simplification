@@ -4,7 +4,6 @@ import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * @author Émeline BONTE, Ghilain BERGERON, Khaled SADEGH
@@ -104,8 +103,57 @@ public final class MLOProblem implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         this.solver.deleteLp();
+    }
+
+    /**
+     * Retourne le nombre de contraintes dans le système.
+     *
+     * @implNote Après résolution, le nombre de contraintes augmente de 1.
+     *
+     * @return le nombre de contraintes dans le système
+     */
+    public int getNbConstraints() {
+        return this.solver.getNrows();
+    }
+
+    /**
+     * Retourne le nombre de variables dans le système.
+     *
+     * @return le nombre de variables du système
+     */
+    public int getNbVars() {
+        return this.solver.getNcolumns();
+    }
+
+    /**
+     * Récupère les coefficients des variables de la N-ième contrainte.
+     *
+     * @implNote Les coefficients des contraintes commencent à partir de l'indice <code>1</code>.
+     *
+     * @param nbRow l'indice <code>N</code> de la contrainte à récupérer
+     *
+     *              Un indice de <code>0</code> indique la fonction objectif.
+     *              Pour récupérer la contrainte <code>c_i</code> du système originel, il faut donner le paramètre
+     *              <code>i + 1</code> à cette méthode.
+     * @return les coefficients des variables dans la contrainte
+     * @throws LpSolveException
+     */
+    public double[] getConstraint(final int nbRow) throws LpSolveException {
+        return this.solver.getPtrRow(nbRow);
+    }
+
+    /**
+     * Retourne la partie droite de la N-ième contrainte du système.
+     *
+     * @param nbRow si N est <code>0</code>, la valeur retournée est <code>0</code>, sinon la valeur retournée
+     *              est celle de la contrainte <code>N - 1</code> dans le système d'origine.
+     * @return la partie droite d'une contrainte
+     * @throws LpSolveException
+     */
+    public double getConstraintRHS(final int nbRow) throws LpSolveException {
+        return this.solver.getRh(nbRow);
     }
 
     /**
