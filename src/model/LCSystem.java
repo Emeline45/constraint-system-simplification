@@ -29,11 +29,11 @@ public class LCSystem {
      * @param sol la solution du problème
      */
     public LCSystem(final MLOProblem problem, final double sol) throws LpSolveException {
-        this.matrix = new double[problem.getNbConstraints()][problem.getNbVars() + 1];
-        this.ineqTypes = new int[problem.getNbConstraints()];
+        this.matrix = new double[problem.getNbConstraints() + 1][problem.getNbVars() + 1];
+        this.ineqTypes = new int[problem.getNbConstraints() + 1];
         this.varTypes = new MLOProblem.VarType[problem.getNbVars()];
 
-        for (int i = 0; i < problem.getNbConstraints(); ++i) {
+        for (int i = 0; i < problem.getNbConstraints() + 1; ++i) {
             final double[] constraint = problem.getConstraint(i);
             System.arraycopy(constraint, 1, this.matrix[i], 0, constraint.length - 1);
             this.matrix[i][problem.getNbVars()] = problem.getConstraintRHS(i);
