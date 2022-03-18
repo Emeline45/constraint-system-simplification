@@ -1,5 +1,6 @@
 package model;
 
+import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
 import java.util.Arrays;
@@ -54,4 +55,39 @@ public class LCSystem {
 
         return builder.toString();
     }
+
+    /**
+     * La matrice représentant le système sans les symboles d'inégalité.
+     *
+     * @return la matrice ainsi que les coefficients <code>b</code>
+     */
+    public double[][] getMatrix() {
+        return matrix;
+    }
+
+    public void setMatrix(double[] values, int i, boolean signe) {
+        System.arraycopy(values, 0, this.matrix[i], 0, this.matrix[0].length);
+
+        //vérifie si changement de signe ou non
+        if(signe) {
+            if(ineqTypes[i] == LpSolve.GE)
+                this.ineqTypes[i] = LpSolve.LE;
+            else if(ineqTypes[i] == LpSolve.LE)
+                this.ineqTypes[i] = LpSolve.GE;
+        }
+    }
+
+    public void setIneqTypes(int i, int value) {
+        this.ineqTypes[i] = value;
+    }
+
+    /**
+     * Les symboles d'inégalité omis de la matrice.
+     *
+     * @return soit {@link MLOProblem#GE}, {@link MLOProblem#EQ} ou {@link MLOProblem#LE}.
+     */
+    public int[] getIneqTypes() {
+        return ineqTypes;
+    }
+
 }

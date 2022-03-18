@@ -1,6 +1,7 @@
 import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.MLOProblem;
+import model.PivotGauss;
 
 import static model.MLOProblem.GE;
 import static model.MLOProblem.LE;
@@ -20,6 +21,10 @@ public class Main {
 
             final LCSystem system = new LCSystem(pb, solution);
             System.out.println(system);
+
+            PivotGauss pg = new PivotGauss(system);
+            pg.echange(0, 3);
+            System.out.println(pg);
         } catch (LpSolveException e) {
             e.printStackTrace();
         }
