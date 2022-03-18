@@ -42,6 +42,15 @@ public class LCSystem {
             this.matrix.set(i, problem.getNbVars(), problem.getConstraintRHS(i));
         }
         this.matrix.set(0, problem.getNbVars(), sol);
+
+        this.ineqTypes[0] = LpSolve.EQ; // la première équation est l'objectif 
+        for (int i = 1; i < problem.getNbConstraints() + 1; ++i) {
+            this.ineqTypes[i] = problem.getConstraintType(i - 1);
+        }
+
+        for (int i = 0; i < problem.getNbVars(); ++i) {
+            this.varTypes[i] = problem.getVarType(i);
+        }
     }
 
     @Override

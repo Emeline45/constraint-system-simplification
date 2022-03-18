@@ -34,7 +34,7 @@ public final class MLOProblem implements Closeable {
      * Ajoute une contrainte au problème d'optimisation linéaire en nombres mixtes.
      *
      * @param row      la description de la partie gauche de la contrainte, sous la forme <code>c_1 c_2 ... c_n</code>
-     *                 où les <code>c_i</code> sont les coefficients devant les variables.
+     *                 où les <code>c_i</code> sont les coefficients devant les variables
      *                 <p>
      *                 Si une variable n'est pas présente dans la contrainte, un coefficient de <code>0</code> doit être indiqué.
      * @param ineqType le type d'égalité de l'équation, entre {@link #GE}, {@link #LE} et {@link #EQ}.
@@ -50,6 +50,25 @@ public final class MLOProblem implements Closeable {
     }
 
     /**
+     * Ajoute une contrainte au problème d'optimisation linéaire en nombres mixtes.
+     *
+     * @param row      la description des coefficients des variables de la partie gauche de la contrainte
+     *                 <p>
+     *                 Si une variable n'est pas présente dans la contrainte, un coefficient de <code>0</code> doit être indiqué.
+     * @param ineqType le type d'égalité de l'équation, entre {@link #GE}, {@link #LE} et {@link #EQ}.
+     * @param b        la valeur à droite de l'équation
+     * @return la nouvelle instance du problème
+     * @throws LpSolveException
+     */
+    public MLOProblem withConstraint(final double[] row, final int ineqType, final double b) throws LpSolveException {
+        assert(ineqType == LE || ineqType == GE || ineqType == EQ);
+        assert(row.length == this.solver.getNcolumns());
+
+        this.solver.addConstraint(row, ineqType, b);
+        return this;
+    }
+
+    /**
      * Ajoute la ligne correspondant au calcul de la fonction objectif.
      *
      * @param row la description des coefficients de la fonction objectif sous la forme <code>c_1 c_2 ... c_n</code>
@@ -61,6 +80,23 @@ public final class MLOProblem implements Closeable {
      */
     public MLOProblem withObjective(final String row) throws LpSolveException {
         this.solver.strSetObjFn(row);
+        return this;
+    }
+
+    /**
+     * Ajoute la ligne correspondant au calcul de la fonction objectif.
+     *
+     * @param row la description des coefficients de la fonction objectif
+     *            <p>
+     *            Si une variable n'est pas présente dans la fonction objectif, un coefficient de <code>0</code>
+     *            doit être indiqué.
+     * @return la nouvelle instance du problème
+     * @throws LpSolveException
+     */
+    public MLOProblem withObjective(final double[] row) throws LpSolveException {
+        assert(row.length == this.solver.getNcolumns());
+
+        this.solver.setObjFn(row);
         return this;
     }
 
@@ -177,6 +213,33 @@ public final class MLOProblem implements Closeable {
     public MLOProblem min() throws LpSolveException {
         this.solver.setMinim();
         return this;
+    }
+
+    /**
+     * Retourne le type de la variable dans le problème d'optimisation en nombres mixtes.
+     *
+     * @param i l'indice de la variable dans le système
+     * @return le type de la variable
+     */
+    public VarType getVarType(final int i) {
+        assert(i >= 0 && i < this.solver.getNcolumns());
+
+        if (this.solver.isInt(i)) return VarType.INT;
+        if (this.solver.isBinary(i)) return VarType.BINARY;
+        return VarType.REAL;
+    }
+
+    /**
+     * Récupère le type de la contrainte numéro <code>i</code> dans le système.
+     *
+     * @param i l'indice de la contrainte
+     * @return le type de la contrainte dont l'indice est passé en paramètre
+     * @throws LpSolveException
+     */
+    public int getConstraintType(final int i) throws LpSolveException {
+        assert(i >= 0 && i < this.solver.getNrows() - 1);
+
+        return this.solver.getConstrType(i + 1);
     }
 
     /**
