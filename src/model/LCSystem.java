@@ -11,7 +11,7 @@ public class LCSystem {
      *
      * @implNote Les coefficients de <code>b</code> sont dans la dernière colonne de la matrice.
      */
-    private double[][] matrix;
+    private Matrix2<Double> matrix;
     /**
      * Les symboles d'inégalité omis de la matrice.
      *
@@ -30,24 +30,26 @@ public class LCSystem {
      * @param sol la solution du problème
      */
     public LCSystem(final MLOProblem problem, final double sol) throws LpSolveException {
-        this.matrix = new double[problem.getNbConstraints() + 1][problem.getNbVars() + 1];
+        this.matrix = new Matrix2<>(problem.getNbConstraints() + 1, problem.getNbVars() + 1);
         this.ineqTypes = new int[problem.getNbConstraints() + 1];
         this.varTypes = new MLOProblem.VarType[problem.getNbVars()];
 
         for (int i = 0; i < problem.getNbConstraints() + 1; ++i) {
             final double[] constraint = problem.getConstraint(i);
-            System.arraycopy(constraint, 1, this.matrix[i], 0, constraint.length - 1);
-            this.matrix[i][problem.getNbVars()] = problem.getConstraintRHS(i);
+            for (int j = 1; j < constraint.length; ++j) {
+                this.matrix.set(i, j - 1, constraint[j]);
+            }
+            this.matrix.set(i, problem.getNbVars(), problem.getConstraintRHS(i));
         }
-        this.matrix[0][problem.getNbVars()] = sol;
+        this.matrix.set(0, problem.getNbVars(), sol);
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
 
-        for (double[] row : this.matrix) {
-            for (double v : row) {
+        for (Double[] row : this.matrix) {
+            for (Double v : row) {
                 builder.append(v).append(" ");
             }
             builder.append("\n");
@@ -61,12 +63,14 @@ public class LCSystem {
      *
      * @return la matrice ainsi que les coefficients <code>b</code>
      */
-    public double[][] getMatrix() {
+    public Matrix2<Double> getMatrix() {
         return matrix;
     }
 
-    public void setMatrix(double[] values, int i, boolean signe) {
-        System.arraycopy(values, 0, this.matrix[i], 0, this.matrix[0].length);
+    public void setMatrixRow(double[] values, int i, boolean signe) {
+        for (int j = 0; j < this.matrix.row(0).length; ++j) {
+            this.matrix.set(i, j, values[j]);
+        }
 
         //vérifie si changement de signe ou non
         if(signe) {

@@ -3,7 +3,7 @@ import exceptions.LignePresenteException;
 import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.MLOProblem;
-import model.PivotGauss;
+import model.simplification.PivotGauss;
 
 import static model.MLOProblem.GE;
 import static model.MLOProblem.LE;
