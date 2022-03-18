@@ -25,7 +25,7 @@ public class Main {
             System.out.println(system);
 
             PivotGauss pg = new PivotGauss(system);
-            pg.echange(0, 0);
+            pg.multiplication(1, 2);
             System.out.println(pg);
         } catch (LpSolveException | LignePresenteException | LigneIdentiqueException e) {
             e.printStackTrace();
