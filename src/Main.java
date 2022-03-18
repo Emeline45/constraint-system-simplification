@@ -1,3 +1,4 @@
+import exceptions.LignePresenteException;
 import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.MLOProblem;
@@ -25,7 +26,7 @@ public class Main {
             PivotGauss pg = new PivotGauss(system);
             pg.echange(0, 3);
             System.out.println(pg);
-        } catch (LpSolveException e) {
+        } catch (LpSolveException | LignePresenteException e) {
             e.printStackTrace();
         }
     }
