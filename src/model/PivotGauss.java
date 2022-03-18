@@ -1,5 +1,6 @@
 package model;
 
+import exceptions.LigneIdentiqueException;
 import exceptions.LignePresenteException;
 
 public class PivotGauss {
@@ -14,7 +15,7 @@ public class PivotGauss {
      * @param Li la ligne à remplacer par Lj
      * @param Lj la ligne qui remplace Li
      */
-    public void echange(int Li, int Lj) throws LignePresenteException {
+    public void echange(int Li, int Lj) throws LignePresenteException, LigneIdentiqueException {
 
         //récupération de la longueur d'une ligne
         int n = system.getMatrix()[0].length;
@@ -27,6 +28,8 @@ public class PivotGauss {
             throw new LignePresenteException(Li);
         if(Lj >= N || Lj < 0)
             throw new LignePresenteException(Lj);
+        if(Li == Lj)
+            throw new LigneIdentiqueException();
 
             double[][] tab = system.getMatrix();
 

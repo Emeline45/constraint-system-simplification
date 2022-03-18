@@ -1,3 +1,4 @@
+import exceptions.LigneIdentiqueException;
 import exceptions.LignePresenteException;
 import lpsolve.LpSolveException;
 import model.LCSystem;
@@ -24,9 +25,9 @@ public class Main {
             System.out.println(system);
 
             PivotGauss pg = new PivotGauss(system);
-            pg.echange(0, 3);
+            pg.echange(0, 0);
             System.out.println(pg);
-        } catch (LpSolveException | LignePresenteException e) {
+        } catch (LpSolveException | LignePresenteException | LigneIdentiqueException e) {
             e.printStackTrace();
         }
     }
