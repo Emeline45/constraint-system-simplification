@@ -27,6 +27,7 @@ public final class MLOProblem implements Closeable {
 
         this.solver = LpSolve.makeLp(0, nbVars);
         this.solver.setVerbose(0);
+        this.solver.setMinim();
     }
 
     /**
@@ -154,6 +155,28 @@ public final class MLOProblem implements Closeable {
      */
     public double getConstraintRHS(final int nbRow) throws LpSolveException {
         return this.solver.getRh(nbRow);
+    }
+
+    /**
+     * Transforme le problème en un problème de maximisation.
+     *
+     * @return le nouveau problème modifié
+     * @throws LpSolveException
+     */
+    public MLOProblem max() throws LpSolveException {
+        this.solver.setMaxim();
+        return this;
+    }
+
+    /**
+     * Transforme le problème en un problème de minimisation.
+     *
+     * @return le nouveau problème modifié
+     * @throws LpSolveException
+     */
+    public MLOProblem min() throws LpSolveException {
+        this.solver.setMinim();
+        return this;
     }
 
     /**
