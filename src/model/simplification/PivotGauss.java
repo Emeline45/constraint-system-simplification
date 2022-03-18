@@ -36,7 +36,7 @@ public class PivotGauss {
         if(Li == Lj)
             throw new LigneIdentiqueException();
 
-        Matrix2<Double> tab = system.getMatrix();
+        Matrix2 tab = system.getMatrix();
 
         double[] tabi = new double[n];
         double[] tabj = new double[n];
@@ -77,7 +77,7 @@ public class PivotGauss {
             throw new LigneIdentiqueException();
 
         //Récupération de la matrice actuelle
-        Matrix2<Double> tab = system.getMatrix();
+        Matrix2 tab = system.getMatrix();
 
         double[] tabi = new double[n];
         double[] tabk = new double[n];
@@ -103,7 +103,7 @@ public class PivotGauss {
         if(Li >= N)
             throw new LignePresenteException(Li);
 
-        Matrix2<Double> tab = system.getMatrix();
+        Matrix2 tab = system.getMatrix();
 
         double[] tabi = new double[n];
 

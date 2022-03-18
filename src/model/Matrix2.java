@@ -1,22 +1,24 @@
 package model;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * Une matrice à 2 dimensions contenant des objets de type <code>T</code>.
- *
- * @param <T> le type des éléments contenus dans la matrice
+ * Une matrice à 2 dimensions contenant des objets de type <code>Double</code>.
  */
-public class Matrix2<T> implements Iterable<T[]>, Cloneable {
-    private final T[][] innerMatrix;
+public class Matrix2 implements Iterable<Double[]>, Cloneable {
+    private Double[][] innerMatrix;
 
     public Matrix2(final int rowCount, final int columnCount) {
-        //noinspection unchecked
-        this.innerMatrix = (T[][]) new Object[rowCount][columnCount];
+        this.innerMatrix = new Double[rowCount][columnCount];
     }
 
-    private Matrix2(final T[][] matrix) {
-        this.innerMatrix = matrix;
+    private Matrix2(final Double[][] matrix) {
+        this.innerMatrix = matrix.clone();
+
+        for (int i = 0; i < matrix.length; ++i) {
+            this.innerMatrix[i] = matrix[i].clone();
+        }
     }
 
     /**
@@ -26,7 +28,7 @@ public class Matrix2<T> implements Iterable<T[]>, Cloneable {
      * @param j la colonne de la case
      * @param value la nouvelle valeur de la case
      */
-    public void set(final int i, final int j, final T value) {
+    public void set(final int i, final int j, final Double value) {
         this.innerMatrix[i][j] = value;
     }
 
@@ -37,7 +39,10 @@ public class Matrix2<T> implements Iterable<T[]>, Cloneable {
      * @param j la colonne de la case
      * @return <code>null</code> si la case n'a pas été initialisée, sinon la valeur contenue dedans
      */
-    public T get(final int i, final int j) {
+    public Double get(final int i, final int j) {
+        assert(i >= 0 && i < this.rowCount());
+        assert(j >= 0 && j < this.columnCount());
+
         return this.innerMatrix[i][j];
     }
 
@@ -47,12 +52,14 @@ public class Matrix2<T> implements Iterable<T[]>, Cloneable {
      * @param i le numéro de la ligne
      * @return un tableau contenant la ligne
      */
-    public T[] row(final int i) {
+    public Double[] row(final int i) {
+        assert(i >= 0 && i < this.rowCount());
+
         return this.innerMatrix[i];
     }
 
     @Override
-    public Iterator<T[]> iterator() {
+    public Iterator<Double[]> iterator() {
         return new Iterator<>() {
             private int i = 0;
 
@@ -62,7 +69,7 @@ public class Matrix2<T> implements Iterable<T[]>, Cloneable {
             }
 
             @Override
-            public T[] next() {
+            public Double[] next() {
                 return Matrix2.this.innerMatrix[i++];
             }
         };
@@ -83,12 +90,35 @@ public class Matrix2<T> implements Iterable<T[]>, Cloneable {
      * @return le nombre de colonnes dans la matrice
      */
     public int columnCount() {
-        return this.innerMatrix[0].length;
+        return this.innerMatrix.length == 0 ? 0 : this.innerMatrix[0].length;
+    }
+
+
+    public void appendRow(final Double[] row) {
+        assert(row.length == this.columnCount());
+
+        final Double[][] newMatrix =  new Double[this.innerMatrix.length + 1][this.columnCount()];
+
+        System.arraycopy(this.innerMatrix, 0, newMatrix, 0, this.innerMatrix.length);
+        System.arraycopy(row, 0, newMatrix[this.innerMatrix.length], 0, row.length);
+
+        this.innerMatrix = newMatrix;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder("[ ");
+
+        for (int i = 0; i < this.rowCount(); ++i) {
+            builder.append(Arrays.toString(this.innerMatrix[i])).append("\n  ");
+        }
+
+        return builder.append(" ]").toString();
     }
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
-    public Matrix2<T> clone() {
-        return new Matrix2<>(this.innerMatrix.clone());
+    public Matrix2 clone() {
+        return new Matrix2(this.innerMatrix);
     }
 }

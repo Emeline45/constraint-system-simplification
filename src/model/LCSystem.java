@@ -14,7 +14,7 @@ public class LCSystem implements Cloneable {
      *
      * @implNote Les coefficients de <code>b</code> sont dans la dernière colonne de la matrice.
      */
-    private Matrix2<Double> matrix;
+    private Matrix2 matrix;
     /**
      * Les symboles d'inégalité omis de la matrice.
      *
@@ -33,7 +33,7 @@ public class LCSystem implements Cloneable {
      * @param sol la solution du problème
      */
     public LCSystem(final MLOProblem problem, final double sol) throws LpSolveException {
-        this.matrix = new Matrix2<>(problem.getNbConstraints() + 1, problem.getNbVars() + 1);
+        this.matrix = new Matrix2(problem.getNbConstraints() + 1, problem.getNbVars() + 1);
         this.ineqTypes = new int[problem.getNbConstraints() + 1];
         this.varTypes = new MLOProblem.VarType[problem.getNbVars()];
 
@@ -61,7 +61,7 @@ public class LCSystem implements Cloneable {
      *
      * @return la matrice ainsi que les coefficients <code>b</code>
      */
-    public Matrix2<Double> getMatrix() {
+    public Matrix2 getMatrix() {
         return matrix;
     }
 
@@ -89,7 +89,25 @@ public class LCSystem implements Cloneable {
      * @return soit {@link MLOProblem#GE}, {@link MLOProblem#EQ} ou {@link MLOProblem#LE}.
      */
     public int[] getIneqTypes() {
-        return ineqTypes;
+        return this.ineqTypes;
+    }
+
+    /**
+     * Retourne les types des variables présentes dans le système de contraintes.
+     *
+     * @return les types des variables
+     */
+    public MLOProblem.VarType[] getVarTypes() {
+        return this.varTypes;
+    }
+
+    public void appendIneqType(int eq) {
+        final int[] newIneqtypes = new int[this.ineqTypes.length + 1];
+
+        System.arraycopy(this.ineqTypes, 0, newIneqtypes, 0, this.ineqTypes.length);
+        newIneqtypes[this.ineqTypes.length] = eq;
+
+        this.ineqTypes = newIneqtypes;
     }
 
     @Override
@@ -110,7 +128,7 @@ public class LCSystem implements Cloneable {
             for (int j = 0; j < this.matrix.columnCount() - 1; ++j) {
                 builder.append(String.format("% 15.7f ", this.matrix.get(i, j)));
             }
-            
+
             final int ineqType = this.ineqTypes[i];
             builder
                     .append(ineqType == LE ? "⩽ " : ineqType == GE ? "⩾ " : "= ")
