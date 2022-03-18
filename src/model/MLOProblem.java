@@ -242,6 +242,10 @@ public final class MLOProblem implements Closeable {
         return this.solver.getConstrType(i + 1);
     }
 
+    public void debug() {
+        this.solver.printLp();
+    }
+
     /**
      * Tous les différents types de variables disponibles pour la résolution de problèmes linéaires en nombres mixtes
      * avec lp_solve.
