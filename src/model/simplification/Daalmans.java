@@ -20,14 +20,29 @@ public class Daalmans {
 
     private final LCSystem system;
 
+    /**
+     * Initialise les algorithmes de Daalmans avec un système de contraintes linéaires.
+     *
+     * @implNote Attention : ce système sera modifié directement par les algorithmes.
+     *
+     * @param originalSystem le système de contraintes initial
+     */
     public Daalmans(final LCSystem originalSystem) {
         this.system = originalSystem;
     }
 
+    /**
+     * Retourne le système de contraintes linéaires utilisé par les algorithmes de Daalmans.
+     *
+     * @return un système de contraintes linéaires
+     */
     public LCSystem getSystem() {
         return this.system;
     }
 
+    /**
+     * Fais tourner les deux algorithmes de Daalmans sur le système donné au constructeur.
+     */
     public void run() {
         try {
             this.removeFixedVariables();
@@ -91,6 +106,20 @@ public class Daalmans {
         }
     }
 
+    /**
+     * Algorithme :
+     * <ul>
+     *     <li>Pour chaque variable <code>V</code> du système <code>S</code></li>
+     *     <li>&emsp;<code>z1</code> = <code>SOLVE({min V | S})</code></li>
+     *     <li>&emsp;<code>z2</code> = <code>SOLVE({max V | S})</code></li>
+     *     <li>&emsp;Si <code>z1 = z2</code></li>
+     *     <li>&emsp;&emsp;<code>S</code> = <code>S[V → z1] U {V = z1}</code></li>
+     * </ul>
+     *
+     * @throws TypeInegaliteInvalideException
+     * @throws TailleLigneInvalideException
+     * @throws ProblemeSansVariablesException
+     */
     private void removeFixedVariables() throws TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
         final Matrix2 matrix = this.system.getMatrix();
         final int nbVars = matrix.columnCount() - 1;
@@ -133,6 +162,19 @@ public class Daalmans {
         }
     }
 
+    /**
+     * Algorithme :
+     * <ul>
+     *     <li>Pour chaque contrainte <code>C</code> du système <code>S</code></li>
+     *     <li>&emsp;<code>S'</code> = <code>(S \ {c}) U {not c}</code></li>
+     *     <li>&emsp;Si <code>EST-SAT(S')</code> = <code>faux</code></li>
+     *     <li>&emsp;&emsp;<code>S</code> = <code>S \ {c}</code></li>
+     * </ul>
+     *
+     * @throws TypeInegaliteInvalideException
+     * @throws TailleLigneInvalideException
+     * @throws ProblemeSansVariablesException
+     */
     private void removeRedundantVariables() throws TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
         final Matrix2 matrix = this.system.getMatrix();
 

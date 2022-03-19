@@ -146,25 +146,27 @@ public class LCSystem implements Cloneable {
     public String toString() {
         StringBuilder builder = new StringBuilder();
 
-        for (int i = 0; i < this.matrix.rowCount(); ++i) {
+        final int rowCount = this.matrix.rowCount();
+        final int columnCount = this.matrix.columnCount();
+        for (int i = 0; i < rowCount; ++i) {
             if (i == 0) {
                 builder.append("⎧  ");
-            } else if (i == this.matrix.rowCount() - 1) {
+            } else if (i == rowCount - 1) {
                 builder.append("⎩  ");
-            } else if (i == Math.floorDiv(this.matrix.rowCount(), 2)) {
+            } else if (i == Math.floorDiv(rowCount, 2)) {
                 builder.append("⎨  ");
             } else {
                 builder.append("⎪  ");
             }
 
-            for (int j = 0; j < this.matrix.columnCount() - 1; ++j) {
+            for (int j = 0; j < columnCount - 1; ++j) {
                 builder.append(String.format("% 15.7f ", this.matrix.get(i, j)));
             }
 
             final int ineqType = this.ineqTypes[i];
             builder
                     .append(ineqType == LE ? "⩽ " : ineqType == GE ? "⩾ " : "= ")
-                    .append(String.format("% 15.7f", this.matrix.get(i, this.matrix.columnCount() - 1)))
+                    .append(String.format("% 15.7f", this.matrix.get(i, columnCount - 1)))
                     .append("\n");
         }
 

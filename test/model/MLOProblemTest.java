@@ -1,5 +1,8 @@
 package model;
 
+import exceptions.problems.ProblemeSansVariablesException;
+import exceptions.problems.TailleLigneInvalideException;
+import exceptions.problems.TypeInegaliteInvalideException;
 import lpsolve.LpSolveException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -10,7 +13,7 @@ public class MLOProblemTest {
     private static final double DELTA = 0.00000001;
 
     @Test
-    public void test1() throws LpSolveException {
+    public void test1() throws LpSolveException, TypeInegaliteInvalideException, ProblemeSansVariablesException {
         final MLOProblem pb = new MLOProblem(2)
                 .withObjective("2 -6")
                 .withConstraint("4 -1", GE, "4")
@@ -26,7 +29,7 @@ public class MLOProblemTest {
     }
 
     @Test
-    public void test2() throws LpSolveException {
+    public void test2() throws LpSolveException, TypeInegaliteInvalideException, ProblemeSansVariablesException {
         final MLOProblem pb = new MLOProblem(2)
                 .withObjective("-1 1")
                 .withConstraint("2 -1", GE, "-2")
@@ -41,7 +44,7 @@ public class MLOProblemTest {
     }
 
     @Test
-    public void test3() throws LpSolveException {
+    public void test3() throws LpSolveException, TypeInegaliteInvalideException, ProblemeSansVariablesException {
         final MLOProblem pb = new MLOProblem(2)
                 .withObjective("1 0")
                 .withConstraint("1 1", GE, "1")
@@ -57,7 +60,7 @@ public class MLOProblemTest {
     }
 
     @Test
-    public void test4() throws LpSolveException {
+    public void test4() throws LpSolveException, TypeInegaliteInvalideException, ProblemeSansVariablesException {
         final MLOProblem pb = new MLOProblem(6)
                 .withObjective("-2 -3 -1 1 -6 -7")
                 .withConstraint("1 0 0 0 0 0", GE, "0.00002")
@@ -69,7 +72,7 @@ public class MLOProblemTest {
     }
 
     @Test
-    public void test5() throws LpSolveException {
+    public void test5() throws LpSolveException, TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
         final MLOProblem pb = new MLOProblem(2)
                 .withObjective("1 3")
                 .withConstraint("1 3", GE, "9")
