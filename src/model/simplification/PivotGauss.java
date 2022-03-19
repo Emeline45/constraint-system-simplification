@@ -65,7 +65,17 @@ public class PivotGauss {
                     }
                 }
             }
+            double lmb = 1 / system.getMatrix().get(i , n - 2);
+            //System.out.println(lmb);
+            try {
+                multiplication(i,lmb);
+            } catch (LignePresenteException | LigneIdentiqueException e) {
+                e.printStackTrace();
+            }
         }
+
+        BorneSupInf bn = new BorneSupInf(this.system);
+        bn.borneSupInf();
     }
 
     /**
@@ -172,8 +182,8 @@ public class PivotGauss {
 
     @Override
     public String toString() {
-        return "PivotGauss{" +
+        return "------ PivotGauss ------" +
                 "\n" + system +
-                '}';
+                ' ';
     }
 }
