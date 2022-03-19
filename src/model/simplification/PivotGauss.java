@@ -2,6 +2,7 @@ package model.simplification;
 
 import exceptions.LigneIdentiqueException;
 import exceptions.LignePresenteException;
+import lpsolve.LpSolve;
 import model.LCSystem;
 import model.Matrix2;
 
@@ -10,6 +11,58 @@ public class PivotGauss {
 
     public PivotGauss(LCSystem sys){
         this.system = sys;
+    }
+
+    public void applicationPivotGauss(){
+        //récupération de la longueur d'une ligne
+        int n = system.getMatrix().columnCount();
+        //récupération du nombre de lignes (contraintes)
+        int N = system.getMatrix().rowCount();
+
+        //Sélection du pivot
+        int a = 0;
+        for(int i = 0; i < N; i++){
+            if(this.system.getIneqTypes()[i] == LpSolve.EQ)
+                a = i;
+        }
+        if(a != 0) {
+            //Vérification que a1j n'est pas nul
+            if(system.getMatrix().get(0,a) != 0)
+                try {
+                    echange(0, a); //échange du pivot si necessaire
+                } catch (LignePresenteException | LigneIdentiqueException e) {
+                    e.printStackTrace();
+                }
+        }
+
+        for(int i = 0; i < N; i++){
+            //Parcours de toutes les contraintes
+            for(int k = i + 1; k < N; k++){
+                double lambda;
+                if(i > n - 1)
+                    lambda = system.getMatrix().get(k,n - 1) / system.getMatrix().get(i , n - 1);
+                else
+                    lambda = system.getMatrix().get(k,i) / system.getMatrix().get(i , i);
+
+                if(i < n - 2) {
+                    try {
+                        soustraction(k, i, lambda);
+                        //System.out.println(system);
+                    } catch (LignePresenteException | LigneIdentiqueException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    double lmb = 1 / system.getMatrix().get(k , n - 2);
+                    //System.out.println(lmb);
+                    try {
+                        multiplication(k,lmb);
+                    } catch (LignePresenteException | LigneIdentiqueException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -25,7 +78,7 @@ public class PivotGauss {
         //récupération de la longueur d'une ligne
         int n = system.getMatrix().columnCount();
 
-        //récupération du nombre de ligne
+        //récupération du nombre de lignes (contraintes)
         int N = system.getMatrix().rowCount();
 
         //Vérification que les lignes font parties de la matrice

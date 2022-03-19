@@ -28,14 +28,14 @@ public class Main {
             final LCSystem daalmansSystem = system.clone();
 
             PivotGauss pg = new PivotGauss(gaussSystem);
-            pg.multiplication(1, 2);
+            pg.applicationPivotGauss();
             System.out.println(pg);
 
             System.out.println("------ Daalmans --------");
             Daalmans daa = new Daalmans(daalmansSystem);
             daa.run();
             System.out.println(daalmansSystem);
-        } catch (LpSolveException | LignePresenteException | LigneIdentiqueException e) {
+        } catch (LpSolveException e) {
             e.printStackTrace();
         }
     }
