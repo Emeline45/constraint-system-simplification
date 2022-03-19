@@ -1,9 +1,9 @@
 package model;
 
+import exceptions.problems.ColonneInvalideException;
+import exceptions.problems.LigneInvalideException;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
-
-import java.util.Arrays;
 
 import static model.MLOProblem.GE;
 import static model.MLOProblem.LE;
@@ -48,11 +48,21 @@ public class LCSystem implements Cloneable {
 
         this.ineqTypes[0] = LpSolve.EQ; // la première équation est l'objectif
         for (int i = 0; i < problem.getNbConstraints(); ++i) {
-            this.ineqTypes[i + 1] = problem.getConstraintType(i);
+            try {
+                this.ineqTypes[i + 1] = problem.getConstraintType(i);
+            } catch (LigneInvalideException e) {
+                System.err.println("Ligne inconnue: type d'inégalité par défaut à LE");
+                this.ineqTypes[i + 1] = MLOProblem.LE;
+            }
         }
 
         for (int i = 0; i < problem.getNbVars(); ++i) {
-            this.varTypes[i] = problem.getVarType(i);
+            try {
+                this.varTypes[i] = problem.getVarType(i);
+            } catch (ColonneInvalideException e) {
+                System.err.println("Colonne inconnue: type de variable par défaut à REAL");
+                this.varTypes[i] = MLOProblem.VarType.REAL;
+            }
         }
     }
 

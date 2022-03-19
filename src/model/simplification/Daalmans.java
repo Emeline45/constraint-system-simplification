@@ -1,7 +1,9 @@
 package model.simplification;
 
 import config.Config;
-import exceptions.TypeInegaliteInvalideException;
+import exceptions.problems.ProblemeSansVariablesException;
+import exceptions.problems.TailleLigneInvalideException;
+import exceptions.problems.TypeInegaliteInvalideException;
 import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.MLOProblem;
@@ -30,16 +32,16 @@ public class Daalmans {
         try {
             this.removeFixedVariables();
             this.removeRedundantVariables();
-        } catch (TypeInegaliteInvalideException e) {
+        } catch (TypeInegaliteInvalideException | TailleLigneInvalideException | ProblemeSansVariablesException e) {
             e.printStackTrace();
         }
     }
 
-    private double solve(final boolean isMax, final double[] objective, final BooleanHolder isInfinite) throws LpSolveException, TypeInegaliteInvalideException {
+    private double solve(final boolean isMax, final double[] objective, final BooleanHolder isInfinite) throws LpSolveException, TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
         return solve(isMax, objective, this.system, isInfinite);
     }
 
-    private double solve(final boolean isMax, final double[] objective, final LCSystem system, final BooleanHolder isInfinite) throws LpSolveException, TypeInegaliteInvalideException {
+    private double solve(final boolean isMax, final double[] objective, final LCSystem system, final BooleanHolder isInfinite) throws LpSolveException, TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
         final double[] obj = new double[objective.length + 1];
         obj[0] = 0.;
         System.arraycopy(objective, 0, obj, 1, objective.length);
@@ -72,7 +74,8 @@ public class Daalmans {
                 row__[0] = 0.;
                 System.arraycopy(row_, 0, row__, 1, row_.length - 1);
 
-                if (Config.VERBOSE) System.err.println("    - [" + i + "]: " + Arrays.toString(row__) + " - " + system.getIneqTypes()[i] + " - " + row_[row_.length - 1]);
+                if (Config.VERBOSE)
+                    System.err.println("    - [" + i + "]: " + Arrays.toString(row__) + " - " + system.getIneqTypes()[i] + " - " + row_[row_.length - 1]);
 
                 pb.withConstraint(row__, system.getIneqTypes()[i], row_[row_.length - 1]);
             }
@@ -88,8 +91,8 @@ public class Daalmans {
         }
     }
 
-    private void removeFixedVariables() throws TypeInegaliteInvalideException {
-        final Matrix2  matrix = this.system.getMatrix();
+    private void removeFixedVariables() throws TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
+        final Matrix2 matrix = this.system.getMatrix();
         final int nbVars = matrix.columnCount() - 1;
 
         for (int n = 0; n < nbVars; ++n) {
@@ -111,7 +114,7 @@ public class Daalmans {
                 // variable redondante
                 for (int i = 0; i < matrix.rowCount(); ++i) {
                     final Double[] row = matrix.row(i);
-                    final Double coeff =  row[n];
+                    final Double coeff = row[n];
 
                     row[n] = 0.;
                     row[row.length - 1] -= coeff * solMin;
@@ -130,7 +133,7 @@ public class Daalmans {
         }
     }
 
-    private void removeRedundantVariables() throws TypeInegaliteInvalideException {
+    private void removeRedundantVariables() throws TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
         final Matrix2 matrix = this.system.getMatrix();
 
         // détail d'implantation :
@@ -192,7 +195,7 @@ public class Daalmans {
         }
     }
 
-    private boolean isFeasible(final LCSystem system) throws TypeInegaliteInvalideException {
+    private boolean isFeasible(final LCSystem system) throws TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
         final Matrix2 matrix = this.system.getMatrix();
         final double[] objective = new double[matrix.columnCount() - 1];
 

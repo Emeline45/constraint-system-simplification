@@ -1,7 +1,7 @@
 package model.simplification;
 
-import exceptions.LigneIdentiqueException;
-import exceptions.LignePresenteException;
+import exceptions.algorithms.gauss.LigneIdentiqueException;
+import exceptions.algorithms.gauss.LignePresenteException;
 import lpsolve.LpSolve;
 import model.LCSystem;
 import model.Matrix2;

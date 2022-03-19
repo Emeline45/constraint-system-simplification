@@ -1,6 +1,5 @@
-import exceptions.LigneIdentiqueException;
-import exceptions.LignePresenteException;
-import exceptions.TypeInegaliteInvalideException;
+import exceptions.problems.ProblemeSansVariablesException;
+import exceptions.problems.TypeInegaliteInvalideException;
 import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.MLOProblem;
@@ -36,7 +35,7 @@ public class Main {
             Daalmans daa = new Daalmans(daalmansSystem);
             daa.run();
             System.out.println(daalmansSystem);
-        } catch (LpSolveException e) {
+        } catch (LpSolveException | TypeInegaliteInvalideException | ProblemeSansVariablesException e) {
             e.printStackTrace();
         }
     }

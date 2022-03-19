@@ -1,6 +1,6 @@
 package model;
 
-import exceptions.TypeInegaliteInvalideException;
+import exceptions.problems.*;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
@@ -23,8 +23,9 @@ public final class MLOProblem implements Closeable {
      * @param nbVars le nombre de variables dans le problème
      * @throws LpSolveException
      */
-    public MLOProblem(final int nbVars) throws LpSolveException {
-        assert (nbVars >= 0);
+    public MLOProblem(final int nbVars) throws LpSolveException, ProblemeSansVariablesException {
+        if (nbVars < 0)
+            throw new ProblemeSansVariablesException();
 
         this.solver = LpSolve.makeLp(0, nbVars);
         this.solver.setVerbose(0);
@@ -43,8 +44,9 @@ public final class MLOProblem implements Closeable {
      * @return la nouvelle instance du problème
      * @throws LpSolveException
      */
-    public MLOProblem withConstraint(final String row, final int ineqType, final String b) throws LpSolveException {
-        assert(ineqType == LE || ineqType == GE || ineqType == EQ);
+    public MLOProblem withConstraint(final String row, final int ineqType, final String b) throws LpSolveException, TypeInegaliteInvalideException {
+        if (ineqType != LE && ineqType != GE && ineqType != EQ)
+            throw new TypeInegaliteInvalideException(ineqType);
 
         this.solver.strAddConstraint(row, ineqType, Double.parseDouble(b));
         return this;
@@ -61,10 +63,11 @@ public final class MLOProblem implements Closeable {
      * @return la nouvelle instance du problème
      * @throws LpSolveException
      */
-    public MLOProblem withConstraint(final double[] row, final int ineqType, final double b) throws LpSolveException, TypeInegaliteInvalideException {
+    public MLOProblem withConstraint(final double[] row, final int ineqType, final double b) throws LpSolveException, TypeInegaliteInvalideException, TailleLigneInvalideException {
         if (ineqType != LE && ineqType != GE && ineqType != EQ)
             throw new TypeInegaliteInvalideException(ineqType);
-        assert(row.length == this.solver.getNorigColumns() + 1);
+        if (row.length != this.solver.getNcolumns() + 1)
+            throw new TailleLigneInvalideException(row.length, this.solver.getNcolumns() + 1);
 
         this.solver.addConstraint(row, ineqType, b);
         return this;
@@ -95,8 +98,9 @@ public final class MLOProblem implements Closeable {
      * @return la nouvelle instance du problème
      * @throws LpSolveException
      */
-    public MLOProblem withObjective(final double[] row) throws LpSolveException {
-        assert(row.length == this.solver.getNorigColumns() + 1);
+    public MLOProblem withObjective(final double[] row) throws LpSolveException, TailleLigneInvalideException {
+        if (row.length != this.solver.getNcolumns() + 1)
+            throw new TailleLigneInvalideException(row.length, this.solver.getNcolumns() + 1);
 
         this.solver.setObjFn(row);
         return this;
@@ -112,8 +116,9 @@ public final class MLOProblem implements Closeable {
      * @throws LpSolveException
      * @implNote si cette fonction n'est pas appelée, toutes les variables sont supposées réelles.
      */
-    public MLOProblem withVarTypes(final VarType... types) throws LpSolveException {
-        assert (types.length == this.solver.getNorigColumns());
+    public MLOProblem withVarTypes(final VarType... types) throws LpSolveException, TailleLigneInvalideException {
+        if (types.length != this.solver.getNcolumns())
+            throw new TailleLigneInvalideException(types.length, this.solver.getNcolumns());
 
         for (int i = 0; i < types.length; ++i) {
             switch (types[i]) {
@@ -189,9 +194,8 @@ public final class MLOProblem implements Closeable {
      * @param nbRow si N est <code>0</code>, la valeur retournée est <code>0</code>, sinon la valeur retournée
      *              est celle de la contrainte <code>N - 1</code> dans le système d'origine.
      * @return la partie droite d'une contrainte
-     * @throws LpSolveException
      */
-    public double getConstraintRHS(final int nbRow) throws LpSolveException {
+    public double getConstraintRHS(final int nbRow) {
         return this.solver.getRh(nbRow);
     }
 
@@ -199,9 +203,8 @@ public final class MLOProblem implements Closeable {
      * Transforme le problème en un problème de maximisation.
      *
      * @return le nouveau problème modifié
-     * @throws LpSolveException
      */
-    public MLOProblem max() throws LpSolveException {
+    public MLOProblem max() {
         this.solver.setMaxim();
         return this;
     }
@@ -210,9 +213,8 @@ public final class MLOProblem implements Closeable {
      * Transforme le problème en un problème de minimisation.
      *
      * @return le nouveau problème modifié
-     * @throws LpSolveException
      */
-    public MLOProblem min() throws LpSolveException {
+    public MLOProblem min() {
         this.solver.setMinim();
         return this;
     }
@@ -223,8 +225,9 @@ public final class MLOProblem implements Closeable {
      * @param i l'indice de la variable dans le système
      * @return le type de la variable
      */
-    public VarType getVarType(final int i) {
-        assert(i >= 0 && i < this.solver.getNcolumns());
+    public VarType getVarType(final int i) throws ColonneInvalideException {
+        if (i < 0 || i >= this.solver.getNcolumns())
+            throw new ColonneInvalideException(i, this.solver.getNcolumns() - 1);
 
         if (this.solver.isInt(i)) return VarType.INT;
         if (this.solver.isBinary(i)) return VarType.BINARY;
@@ -238,8 +241,9 @@ public final class MLOProblem implements Closeable {
      * @return le type de la contrainte dont l'indice est passé en paramètre
      * @throws LpSolveException
      */
-    public int getConstraintType(final int i) throws LpSolveException {
-        assert(i >= 0 && i <= this.solver.getNrows() - 1);
+    public int getConstraintType(final int i) throws LpSolveException, LigneInvalideException {
+        if (i < 0 || i > this.solver.getNrows() - 1)
+            throw new LigneInvalideException(i, this.solver.getNrows() - 1);
 
         return this.solver.getConstrType(i + 1);
     }

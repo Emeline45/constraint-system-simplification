@@ -1,4 +1,4 @@
-package exceptions;
+package exceptions.algorithms.gauss;
 
 public class LignePresenteException extends Exception{
 

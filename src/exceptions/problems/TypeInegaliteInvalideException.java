@@ -1,4 +1,4 @@
-package exceptions;
+package exceptions.problems;
 
 import model.MLOProblem;
 
