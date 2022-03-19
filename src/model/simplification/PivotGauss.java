@@ -13,6 +13,9 @@ public class PivotGauss {
         this.system = sys;
     }
 
+    /**
+     * Application du pivot de gauss sur le système
+     */
     public void applicationPivotGauss(){
         //récupération de la longueur d'une ligne
         int n = system.getMatrix().columnCount();
@@ -52,7 +55,7 @@ public class PivotGauss {
                         e.printStackTrace();
                     }
                 }
-                else {
+                else { //Lorsque l'on a plus de contraintes que de variable
                     double lmb = 1 / system.getMatrix().get(k , n - 2);
                     //System.out.println(lmb);
                     try {
