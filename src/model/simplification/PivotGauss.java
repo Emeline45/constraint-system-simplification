@@ -55,7 +55,7 @@ public class PivotGauss {
                         e.printStackTrace();
                     }
                 }
-                else { //Lorsque l'on a plus de contraintes que de variable
+                else {//Lorsque l'on a plus de contraintes que de variable
                     double lmb = 1 / system.getMatrix().get(k , n - 2);
                     //System.out.println(lmb);
                     try {
@@ -65,14 +65,17 @@ public class PivotGauss {
                     }
                 }
             }
-            double lmb = 1 / system.getMatrix().get(i , n - 2);
-            //System.out.println(lmb);
-            try {
-                multiplication(i,lmb);
-            } catch (LignePresenteException | LigneIdentiqueException e) {
-                e.printStackTrace();
+            if(i == n - 2) {
+                double lmb = 1 / system.getMatrix().get(i, n - 2);
+                //System.out.println(lmb);
+                try {
+                    multiplication(i, lmb);
+                } catch (LignePresenteException | LigneIdentiqueException e) {
+                    e.printStackTrace();
+                }
             }
         }
+
 
         BorneSupInf bn = new BorneSupInf(this.system);
         bn.borneSupInf();

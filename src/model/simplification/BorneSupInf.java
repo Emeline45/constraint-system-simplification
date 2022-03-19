@@ -4,17 +4,14 @@ import lpsolve.LpSolve;
 import model.LCSystem;
 import model.Matrix2;
 
-import javax.lang.model.type.NullType;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 public class BorneSupInf {
-    private LCSystem lcSystem;
+    private final LCSystem lcSystem;
 
-    private Map<Integer, Double> max;
-    private Map<Integer, Double> min;
+    private final Map<Integer, Double> max;
+    private final Map<Integer, Double> min;
 
 
     public BorneSupInf(LCSystem lcSystem){
@@ -23,6 +20,9 @@ public class BorneSupInf {
         this.max = new HashMap<>();
     }
 
+    /**
+     * Calcul la borne supérieur et inférieur des variables de la matrice
+     */
     public void borneSupInf(){
         int N = lcSystem.getMatrix().rowCount(); //Parcours des contraintes
         int n = lcSystem.getMatrix().columnCount(); //Parcours des variables
@@ -66,16 +66,25 @@ public class BorneSupInf {
         Matrix2 m = this.lcSystem.getMatrix().clone();
 
         int taille = N;
-        while(taille != nbVar){
-            lcSystem.getMatrix().removeRow(taille - 1);
-            taille = lcSystem.getMatrix().rowCount();
-        }
+        if(N > nbVar) {
+            while (taille != nbVar) {
+                lcSystem.getMatrix().removeRow(taille - 1);
+                taille = lcSystem.getMatrix().rowCount();
+            }
 
         lcSystem.getMatrix().appendRow(m.row(indiceMax));
         lcSystem.getMatrix().appendRow(m.row(indiceMin));
 
+        }
+
     }
 
+    /**
+     * Vérification s'il n'y a que un élément différent de 0
+     * @param L La ligne à vérifier
+     * @param n la longueur de la matrice
+     * @return false si un des premiers éléments est différent de 0
+     */
     private boolean born(int L, int n){
         for(int j = 0; j < n - 2; j++){
             if(lcSystem.getMatrix().get(L,j) != 0)

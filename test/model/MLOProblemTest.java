@@ -4,6 +4,7 @@ import exceptions.problems.ProblemeSansVariablesException;
 import exceptions.problems.TailleLigneInvalideException;
 import exceptions.problems.TypeInegaliteInvalideException;
 import lpsolve.LpSolveException;
+import model.simplification.PivotGauss;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +40,15 @@ public class MLOProblemTest {
                 .withConstraint("0 1", GE, "0");
         final double solution = pb.solve();
 
+        final LCSystem system = new LCSystem(pb, solution);
+        System.out.println(system);
+
+        final LCSystem gaussSystem = system.clone();
+
+        PivotGauss pg = new PivotGauss(gaussSystem);
+        pg.applicationPivotGauss();
+        System.out.println(pg);
+
         // résultat attendu -2.00000000
         Assertions.assertEquals(-2, solution, DELTA);
     }
@@ -55,6 +65,15 @@ public class MLOProblemTest {
                 .withConstraint("0 1", GE, "0");
         final double solution = pb.solve();
 
+        final LCSystem system = new LCSystem(pb, solution);
+        System.out.println(system);
+
+        final LCSystem gaussSystem = system.clone();
+
+        PivotGauss pg = new PivotGauss(gaussSystem);
+        pg.applicationPivotGauss();
+        System.out.println(pg);
+
         // résultat attendu : 0
         Assertions.assertEquals(0, solution, DELTA);
     }
@@ -66,6 +85,15 @@ public class MLOProblemTest {
                 .withConstraint("1 0 0 0 0 0", GE, "0.00002")
                 .withConstraint("-2 -3 -1 1 -6 -7", GE, "-5");
         final double solution = pb.solve();
+
+        final LCSystem system = new LCSystem(pb, solution);
+        System.out.println(system);
+
+        final LCSystem gaussSystem = system.clone();
+
+        PivotGauss pg = new PivotGauss(gaussSystem);
+        pg.applicationPivotGauss();
+        System.out.println(pg);
 
         // résultat attendu : -5.00000000
         Assertions.assertEquals(-5, solution, DELTA);
@@ -81,6 +109,15 @@ public class MLOProblemTest {
                 .withConstraint("0 1", LE, "6")
                 .withVarTypes(VarType.REAL, VarType.INT);
         final double solution = pb.solve();
+
+        final LCSystem system = new LCSystem(pb, solution);
+        System.out.println(system);
+
+        final LCSystem gaussSystem = system.clone();
+
+        PivotGauss pg = new PivotGauss(gaussSystem);
+        pg.applicationPivotGauss();
+        System.out.println(pg);
 
         // résultat attendu : 9
         Assertions.assertEquals(9, solution, DELTA);
