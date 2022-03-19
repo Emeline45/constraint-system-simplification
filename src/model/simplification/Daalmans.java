@@ -1,17 +1,20 @@
 package model.simplification;
 
 import config.Config;
+import exceptions.TypeInegaliteInvalideException;
 import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.MLOProblem;
 import model.Matrix2;
+import utils.BooleanHolder;
 
 import java.util.Arrays;
 
-import static model.MLOProblem.EQ;
+import static model.MLOProblem.*;
 
 public class Daalmans {
     private final static double DELTA = 0.00000001;
+    private final static double EPSILON = 0.00001;
 
     private final LCSystem system;
 
@@ -24,30 +27,37 @@ public class Daalmans {
     }
 
     public void run() {
-        this.removeFixedVariables();
-        this.deleteConstantConstraints();
-        this.removeRedundantVariables();
+        try {
+            this.removeFixedVariables();
+            this.removeRedundantVariables();
+        } catch (TypeInegaliteInvalideException e) {
+            e.printStackTrace();
+        }
     }
 
-    private double solve(final boolean isMax, final double[] objective) throws LpSolveException {
+    private double solve(final boolean isMax, final double[] objective, final BooleanHolder isInfinite) throws LpSolveException, TypeInegaliteInvalideException {
+        return solve(isMax, objective, this.system, isInfinite);
+    }
+
+    private double solve(final boolean isMax, final double[] objective, final LCSystem system, final BooleanHolder isInfinite) throws LpSolveException, TypeInegaliteInvalideException {
         final double[] obj = new double[objective.length + 1];
         obj[0] = 0.;
         System.arraycopy(objective, 0, obj, 1, objective.length);
 
-        if (Config.VERBOSE) System.err.println("Problème :");
+        if (Config.VERBOSE) System.err.println("  Problème :");
 
-        try (MLOProblem pb = new MLOProblem(this.system.getMatrix().columnCount() - 1)
+        try (MLOProblem pb = new MLOProblem(system.getMatrix().columnCount() - 1)
                 .withObjective(obj)) {
-            if (Config.VERBOSE) System.err.println("- Objectif : " + Arrays.toString(objective));
+            if (Config.VERBOSE) System.err.println("  - Objectif : " + Arrays.toString(objective));
 
             if (isMax) pb.max();
             else pb.min();
 
-            if (Config.VERBOSE) System.err.println("- Max : " + isMax);
+            if (Config.VERBOSE) System.err.println("  - Max : " + isMax);
 
-            final Matrix2 matrix = this.system.getMatrix();
+            final Matrix2 matrix = system.getMatrix();
 
-            if (Config.VERBOSE) System.err.println("- Contraintes :");
+            if (Config.VERBOSE) System.err.println("  - Contraintes :");
             for (int i = 0; i < matrix.rowCount(); ++i) {
                 final Double[] row = matrix.row(i);
 
@@ -62,32 +72,36 @@ public class Daalmans {
                 row__[0] = 0.;
                 System.arraycopy(row_, 0, row__, 1, row_.length - 1);
 
-                if (Config.VERBOSE) System.err.println("  - [" + i + "]: " + Arrays.toString(row__) + " " + this.system.getIneqTypes()[i] + " " + row_[row_.length - 1]);
+                if (Config.VERBOSE) System.err.println("    - [" + i + "]: " + Arrays.toString(row__) + " - " + system.getIneqTypes()[i] + " - " + row_[row_.length - 1]);
 
-                pb.withConstraint(row__, this.system.getIneqTypes()[i], row_[row_.length - 1]);
+                pb.withConstraint(row__, system.getIneqTypes()[i], row_[row_.length - 1]);
             }
 
-            pb.withVarTypes(this.system.getVarTypes());
+            pb.withVarTypes(system.getVarTypes());
 
             final double sol = pb.solve();
-            if (Config.VERBOSE) System.err.println("- Solution : " + sol);
+            if (Config.VERBOSE) System.err.println("  - Solution : " + sol);
+
+            if (isInfinite != null) isInfinite.set(pb.isInfinite(sol));
 
             return sol;
         }
     }
 
-    private void removeFixedVariables() {
+    private void removeFixedVariables() throws TypeInegaliteInvalideException {
         final Matrix2  matrix = this.system.getMatrix();
         final int nbVars = matrix.columnCount() - 1;
 
         for (int n = 0; n < nbVars; ++n) {
+            if (Config.VERBOSE) System.err.println("Variable " + n + " fixe ?");
+
             final double[] localObjective = new double[nbVars];
             localObjective[n] = 1.;
 
             double solMin, solMax;
             try {
-                solMin = this.solve(false, localObjective);
-                solMax = this.solve(true, localObjective);
+                solMin = this.solve(false, localObjective, null);
+                solMax = this.solve(true, localObjective, null);
             } catch (LpSolveException e) {
                 e.printStackTrace();
                 continue;
@@ -116,12 +130,79 @@ public class Daalmans {
         }
     }
 
-    private void deleteConstantConstraints() {
-        // TODO: enlever toutes les contraintes n'ayant que des 0.0 à gauche
+    private void removeRedundantVariables() throws TypeInegaliteInvalideException {
+        final Matrix2 matrix = this.system.getMatrix();
+
+        // détail d'implantation :
+        //
+        // on itère en partant de la fin, comme ça si on supprime des contraintes, les indices des contraintes
+        // suivantes ne sont pas changés dynamiquement
+        for (int i = matrix.rowCount() - 1; i >= 0; --i) {
+            if (Config.VERBOSE) System.err.println("Contrainte " + i + " redondante ?");
+
+            boolean result = true;
+
+            final LCSystem tmp = this.system.clone();
+            final int ineqType = tmp.getIneqTypes()[i];
+            final Double[] row = tmp.getMatrix().row(i);
+
+            tmp.removeConstraint(i);
+
+            final Matrix2 matrix2 = tmp.getMatrix();
+
+            switch (ineqType) {
+                case EQ: {
+                    final Double tmpResult = row[row.length - 1];
+
+                    row[row.length - 1] = tmpResult + EPSILON;
+                    matrix2.appendRow(row);
+                    tmp.appendIneqType(GE);
+
+                    result = this.isFeasible(tmp);
+
+                    row[row.length - 1] = tmpResult - EPSILON;
+                    tmp.setIneqTypes(tmp.getIneqTypes().length - 1, LE);
+
+                    result = result && this.isFeasible(tmp);
+                    break;
+                }
+                case LE: {
+                    row[row.length - 1] += EPSILON;
+
+                    matrix2.appendRow(row);
+                    tmp.appendIneqType(GE);
+
+                    result = this.isFeasible(tmp);
+                    break;
+                }
+                case GE: {
+                    row[row.length - 1] -= EPSILON;
+
+                    matrix2.appendRow(row);
+                    tmp.appendIneqType(LE);
+
+                    result = this.isFeasible(tmp);
+                    break;
+                }
+            }
+
+            if (!result) {
+                this.system.removeConstraint(i);
+            }
+        }
     }
 
-    private void removeRedundantVariables() {
-        final int nbVars = system.getMatrix().columnCount() - 1;
-        final double[] nullObjective = new double[nbVars];
+    private boolean isFeasible(final LCSystem system) throws TypeInegaliteInvalideException {
+        final Matrix2 matrix = this.system.getMatrix();
+        final double[] objective = new double[matrix.columnCount() - 1];
+
+        final BooleanHolder isInfinite = new BooleanHolder();
+
+        try {
+            this.solve(false, objective, system, isInfinite);
+            return !isInfinite.get();
+        } catch (LpSolveException e) {
+            return false;
+        }
     }
 }

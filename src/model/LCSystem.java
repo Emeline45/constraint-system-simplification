@@ -47,8 +47,8 @@ public class LCSystem implements Cloneable {
         this.matrix.set(0, problem.getNbVars(), sol);
 
         this.ineqTypes[0] = LpSolve.EQ; // la première équation est l'objectif
-        for (int i = 1; i < problem.getNbConstraints() + 1; ++i) {
-            this.ineqTypes[i] = problem.getConstraintType(i - 1);
+        for (int i = 0; i < problem.getNbConstraints(); ++i) {
+            this.ineqTypes[i + 1] = problem.getConstraintType(i);
         }
 
         for (int i = 0; i < problem.getNbVars(); ++i) {
@@ -101,6 +101,11 @@ public class LCSystem implements Cloneable {
         return this.varTypes;
     }
 
+    /**
+     * Ajoute un type d'inégalité à la fin de la matrice.
+     *
+     * @param eq le type d'égalité, soit {@link MLOProblem#GE}, {@link MLOProblem#LE} ou {@link MLOProblem#EQ}
+     */
     public void appendIneqType(int eq) {
         final int[] newIneqtypes = new int[this.ineqTypes.length + 1];
 
@@ -108,6 +113,23 @@ public class LCSystem implements Cloneable {
         newIneqtypes[this.ineqTypes.length] = eq;
 
         this.ineqTypes = newIneqtypes;
+    }
+
+    /**
+     * Retire une contrainte, ainsi que son type d'inégalité associé, du système de contraintes.
+     *
+     * @param i le numéro de la contrainte
+     */
+    public void removeConstraint(final int i) {
+        final Matrix2 matrix = this.matrix;
+        matrix.removeRow(i);
+
+        final int[] proxyIneqTypes = new int[this.ineqTypes.length - 1];
+
+        System.arraycopy(this.ineqTypes, 0, proxyIneqTypes, 0, i);
+        System.arraycopy(this.ineqTypes, i + 1, proxyIneqTypes, i, this.ineqTypes.length - i - 1);
+
+        this.ineqTypes = proxyIneqTypes;
     }
 
     @Override

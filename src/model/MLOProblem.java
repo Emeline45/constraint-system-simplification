@@ -1,5 +1,6 @@
 package model;
 
+import exceptions.TypeInegaliteInvalideException;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
@@ -60,9 +61,10 @@ public final class MLOProblem implements Closeable {
      * @return la nouvelle instance du problème
      * @throws LpSolveException
      */
-    public MLOProblem withConstraint(final double[] row, final int ineqType, final double b) throws LpSolveException {
-        assert(ineqType == LE || ineqType == GE || ineqType == EQ);
-        assert(row.length == this.solver.getNcolumns());
+    public MLOProblem withConstraint(final double[] row, final int ineqType, final double b) throws LpSolveException, TypeInegaliteInvalideException {
+        if (ineqType != LE && ineqType != GE && ineqType != EQ)
+            throw new TypeInegaliteInvalideException(ineqType);
+        assert(row.length == this.solver.getNorigColumns() + 1);
 
         this.solver.addConstraint(row, ineqType, b);
         return this;
@@ -94,7 +96,7 @@ public final class MLOProblem implements Closeable {
      * @throws LpSolveException
      */
     public MLOProblem withObjective(final double[] row) throws LpSolveException {
-        assert(row.length == this.solver.getNcolumns());
+        assert(row.length == this.solver.getNorigColumns() + 1);
 
         this.solver.setObjFn(row);
         return this;
@@ -111,7 +113,7 @@ public final class MLOProblem implements Closeable {
      * @implNote si cette fonction n'est pas appelée, toutes les variables sont supposées réelles.
      */
     public MLOProblem withVarTypes(final VarType... types) throws LpSolveException {
-        assert (types.length == this.solver.getNcolumns());
+        assert (types.length == this.solver.getNorigColumns());
 
         for (int i = 0; i < types.length; ++i) {
             switch (types[i]) {
@@ -237,9 +239,19 @@ public final class MLOProblem implements Closeable {
      * @throws LpSolveException
      */
     public int getConstraintType(final int i) throws LpSolveException {
-        assert(i >= 0 && i < this.solver.getNrows() - 1);
+        assert(i >= 0 && i <= this.solver.getNrows() - 1);
 
         return this.solver.getConstrType(i + 1);
+    }
+
+    /**
+     * Vérifie si une valeur est considérée comme infinie du point de vue de lp_solve.
+     *
+     * @param val la valeur
+     * @return <code>true</code> si la valeur est considérée infinie, <code>false</code> sinon
+     */
+    public boolean isInfinite(final double val) {
+        return this.solver.isInfinite(val);
     }
 
     public void debug() {

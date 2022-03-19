@@ -1,5 +1,6 @@
 import exceptions.LigneIdentiqueException;
 import exceptions.LignePresenteException;
+import exceptions.TypeInegaliteInvalideException;
 import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.MLOProblem;

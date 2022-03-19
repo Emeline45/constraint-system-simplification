@@ -93,7 +93,11 @@ public class Matrix2 implements Iterable<Double[]>, Cloneable {
         return this.innerMatrix.length == 0 ? 0 : this.innerMatrix[0].length;
     }
 
-
+    /**
+     * Rajoute une ligne à la fin de la matrice.
+     *
+     * @param row la ligne à rajouter
+     */
     public void appendRow(final Double[] row) {
         assert(row.length == this.columnCount());
 
@@ -103,6 +107,22 @@ public class Matrix2 implements Iterable<Double[]>, Cloneable {
         System.arraycopy(row, 0, newMatrix[this.innerMatrix.length], 0, row.length);
 
         this.innerMatrix = newMatrix;
+    }
+
+    /**
+     * Retire la ligne à l'indice <code>i</code> de la matrice.
+     *
+     * @implNote Tous les indices après <code>i</code> sont décalés de 1
+     *
+     * @param i l'indice de la ligne à retirer
+     */
+    public void removeRow(final int i) {
+        final Double[][] proxyMatrix = new Double[this.innerMatrix.length - 1][this.columnCount()];
+
+        System.arraycopy(this.innerMatrix, 0, proxyMatrix, 0, i);
+        System.arraycopy(this.innerMatrix, i + 1, proxyMatrix, i, this.innerMatrix.length - i - 1);
+
+        this.innerMatrix = proxyMatrix;
     }
 
     @Override
