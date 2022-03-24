@@ -64,16 +64,20 @@ public class BorneSupInf {
         }
 
         Matrix2 m = this.lcSystem.getMatrix().clone();
+        int[] ineqs = this.lcSystem.getIneqTypes().clone();
 
         int taille = N;
         if(N > nbVar) {
             while (taille != nbVar) {
-                lcSystem.getMatrix().removeRow(taille - 1);
+                //lcSystem.getMatrix().removeRow(taille - 1);
+                lcSystem.removeConstraint(taille - 1);
                 taille = lcSystem.getMatrix().rowCount();
             }
 
-        lcSystem.getMatrix().appendRow(m.row(indiceMax));
-        lcSystem.getMatrix().appendRow(m.row(indiceMin));
+            lcSystem.getMatrix().appendRow(m.row(indiceMax));
+            lcSystem.appendIneqType(ineqs[indiceMax]);
+            lcSystem.getMatrix().appendRow(m.row(indiceMin));
+            lcSystem.appendIneqType(ineqs[indiceMin]);
 
         }
 
