@@ -38,7 +38,7 @@ public class BorneSupInf {
                     valMax = lcSystem.getMatrix().get(i, n-1);
                     indiceMax = i;
                 }
-                else{
+                else if (lcSystem.getIneqTypes()[i] == LpSolve.LE){
                     min.put(i,lcSystem.getMatrix().get(i,n-1));
                     valMin = lcSystem.getMatrix().get(i, n-1);
                     indiceMin = i;
