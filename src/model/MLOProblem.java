@@ -13,6 +13,9 @@ import java.io.Closeable;
 public final class MLOProblem implements Closeable {
     private final LpSolve solver;
 
+    private int solveStatus = -1;
+    private boolean solved = false;
+
     public static final int EQ = LpSolve.EQ;
     public static final int LE = LpSolve.LE;
     public static final int GE = LpSolve.GE;
@@ -142,7 +145,8 @@ public final class MLOProblem implements Closeable {
      * @throws LpSolveException
      */
     public double solve() throws LpSolveException {
-        this.solver.solve();
+        this.solveStatus = this.solver.solve();
+        this.solved = true;
         return this.solver.getObjective();
     }
 
@@ -256,6 +260,47 @@ public final class MLOProblem implements Closeable {
      */
     public boolean isInfinite(final double val) {
         return this.solver.isInfinite(val);
+    }
+
+    /**
+     * Vérifie si le problème résolu est faisable ou non
+     * (s'il existe une valuation des variables respectant toutes les contraintes).
+     *
+     * @return <code>true</code> si le problème est faisable, <code>false</code> sinon
+     * @throws NonResoluException si le problème n'a pas été résolu au préalable
+     */
+    public boolean isInfeasable() throws NonResoluException {
+        if (!this.solved)
+            throw new NonResoluException();
+
+        return this.solveStatus == LpSolve.INFEASIBLE;
+    }
+
+    /**
+     * Vérifie si le problème résolu est non-borné ou non
+     * (si la valeur de la fonction objectif est infinie).
+     *
+     * @return <code>true</code> si le problème est non-borné, <code>false</code> sinon
+     * @throws NonResoluException si le problème n'a pas été résolu au préalable
+     */
+    public boolean isUnbounded() throws NonResoluException {
+        if (!this.solved)
+            throw new NonResoluException();
+
+        return this.solveStatus == LpSolve.UNBOUNDED;
+    }
+
+    /**
+     * Vérifie si le problème résolu est optimal ou sous-optimal.
+     *
+     * @return <code>true</code> si le problème est optimal, <code>false</code> sinon
+     * @throws NonResoluException si le problème n'a pas été résolu au préalable
+     */
+    public boolean isOptimal() throws NonResoluException {
+        if (!this.solved)
+            throw new NonResoluException();
+
+        return this.solveStatus == LpSolve.OPTIMAL || this.solveStatus == LpSolve.SUBOPTIMAL;
     }
 
     public void debug() {

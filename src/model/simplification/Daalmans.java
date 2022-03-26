@@ -1,6 +1,7 @@
 package model.simplification;
 
 import config.Config;
+import exceptions.problems.NonResoluException;
 import exceptions.problems.ProblemeSansVariablesException;
 import exceptions.problems.TailleLigneInvalideException;
 import exceptions.problems.TypeInegaliteInvalideException;
@@ -52,11 +53,11 @@ public class Daalmans {
         }
     }
 
-    private double solve(final boolean isMax, final double[] objective, final BooleanHolder isInfinite) throws LpSolveException, TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
-        return solve(isMax, objective, this.system, isInfinite);
+    private double solve(final boolean isMax, final double[] objective, final BooleanHolder isInfinite, final BooleanHolder isFeasable) throws LpSolveException, TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException, NonResoluException {
+        return solve(isMax, objective, this.system, isInfinite, isFeasable);
     }
 
-    private double solve(final boolean isMax, final double[] objective, final LCSystem system, final BooleanHolder isInfinite) throws LpSolveException, TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
+    private double solve(final boolean isMax, final double[] objective, final LCSystem system, final BooleanHolder isInfinite, final BooleanHolder isFeasable) throws LpSolveException, TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException, NonResoluException {
         final double[] obj = new double[objective.length + 1];
         obj[0] = 0.;
         System.arraycopy(objective, 0, obj, 1, objective.length);
@@ -100,7 +101,16 @@ public class Daalmans {
             final double sol = pb.solve();
             if (Config.VERBOSE) System.err.println("  - Solution : " + sol);
 
-            if (isInfinite != null) isInfinite.set(pb.isInfinite(sol));
+            if (isInfinite != null) {
+                final boolean isInfinite_ = pb.isUnbounded() || pb.isInfinite(sol);
+                if (Config.VERBOSE) System.err.println("  - Est infinie : " + isInfinite_);
+                isInfinite.set(isInfinite_);
+            }
+            if (isFeasable != null) {
+                final boolean isFeasable_ = !pb.isInfeasable();
+                if (Config.VERBOSE) System.err.println("  - Est faisable : " + isFeasable_);
+                isFeasable.set(isFeasable_);
+            }
 
             return sol;
         }
@@ -132,9 +142,15 @@ public class Daalmans {
 
             double solMin, solMax;
             try {
-                solMin = this.solve(false, localObjective, null);
-                solMax = this.solve(true, localObjective, null);
-            } catch (LpSolveException e) {
+                final BooleanHolder minFeasable = new BooleanHolder();
+                final BooleanHolder maxFeasable = new BooleanHolder();
+
+                solMin = this.solve(false, localObjective, null, minFeasable);
+                solMax = this.solve(true, localObjective, null, maxFeasable);
+
+                if (!minFeasable.get() || !maxFeasable.get())
+                    continue;
+            } catch (LpSolveException | NonResoluException e) {
                 e.printStackTrace();
                 continue;
             }
@@ -242,11 +258,12 @@ public class Daalmans {
         final double[] objective = new double[matrix.columnCount() - 1];
 
         final BooleanHolder isInfinite = new BooleanHolder();
+        final BooleanHolder isFeasable = new BooleanHolder();
 
         try {
-            this.solve(false, objective, system, isInfinite);
-            return !isInfinite.get();
-        } catch (LpSolveException e) {
+            this.solve(false, objective, system, isInfinite, isFeasable);
+            return isFeasable.get();
+        } catch (LpSolveException | NonResoluException e) {
             return false;
         }
     }
