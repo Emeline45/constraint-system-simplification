@@ -22,7 +22,14 @@ public class SystemGenerator {
 
     private final Random random;
 
-
+    /**
+     * Génère un problème d'optimisation linéaire mixte
+     * @param bornInf borne inférieure de l'intervalle de génération des coefficients
+     * @param bornSup borne supérieure de l'intervalle de génération des coefficients
+     * @throws ProblemeSansVariablesException nbVar est = 0 dans le constructeur du MLOProblem
+     * @throws LpSolveException lpSolve a échoué
+     * @throws TypeInegaliteInvalideException lorsque le type d'égalité de l'équation est différent de GE, LE et EQ
+     */
     public SystemGenerator(double bornInf, double bornSup) throws ProblemeSansVariablesException, LpSolveException, TypeInegaliteInvalideException {
         this.bornInf = bornInf;
         this.bornSup = bornSup;
@@ -34,8 +41,15 @@ public class SystemGenerator {
         contraints();
         //Création des coef de la fonction objective
         objectiv();
+
+        //Ajout des variables réelles, entières ou mixtes
     }
 
+    /**
+     * Génère les contraintes aléatoirement
+     * @throws LpSolveException lpSolve a échoué
+     * @throws TypeInegaliteInvalideException lorsque le type d'égalité de l'équation est différent de GE, LE et EQ
+     */
     private void contraints() throws LpSolveException, TypeInegaliteInvalideException {
         int nbV = pb.getNbVars();
         int nbC = random.nextInt(NBCV);
@@ -53,6 +67,10 @@ public class SystemGenerator {
         }
     }
 
+    /**
+     * Génère la fonction objective aléatoirement
+     * @throws LpSolveException lpSolve a échoué
+     */
     private void objectiv() throws LpSolveException {
         int nbV = pb.getNbVars();
         StringBuilder s = new StringBuilder();
@@ -62,15 +80,29 @@ public class SystemGenerator {
         pb.withObjective(s.toString());
     }
 
+    /**
+     * Vérifie s'il existe une solution optimal au problème
+     * @return true s'il existe une solution
+     * @throws NonResoluException le problème n'a pas encore été résolu avec la méthode `solve()`
+     * @throws LpSolveException lpSolve a échoué
+     */
     public boolean solveExist() throws NonResoluException, LpSolveException {
         this.solve = pb.solve();
         return pb.isOptimal();
     }
 
+    /**
+     * Retourne le problème d'optimisation linéaire mixte
+     * @return le problème d'optimisation linéaire mixte
+     */
     public MLOProblem getPb() {
         return pb;
     }
 
+    /**
+     * Retourne la solution optimale du problème
+     * @return la solution optimale du problème
+     */
     public double getSolve() {
         return solve;
     }

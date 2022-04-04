@@ -162,6 +162,13 @@ public class PivotGauss {
 
     }
 
+    /**
+     * Multiplication d'une ligne Li par un lambda
+     * @param Li la ligne a multiplier
+     * @param lambda le coefficient multiplicateur
+     * @throws LignePresenteException l'indice ne fait pas partie de la matrice
+     * @throws LigneIdentiqueException les indices sont les mêmes
+     */
     public void multiplication(int Li, double lambda) throws LignePresenteException,LigneIdentiqueException{
         //Taille de la ligne Li
         int n = system.getMatrix().columnCount();
