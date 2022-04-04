@@ -4,9 +4,11 @@ import exceptions.problems.ProblemeSansVariablesException;
 import exceptions.problems.TailleLigneInvalideException;
 import exceptions.problems.TypeInegaliteInvalideException;
 import lpsolve.LpSolveException;
+import model.simplification.Daalmans;
 import model.simplification.PivotGauss;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import random.SystemGenerator;
 
 import static model.MLOProblem.*;
 
@@ -24,6 +26,20 @@ public class MLOProblemTest {
                 .withConstraint("1 0", GE, "2")
                 .withConstraint("0 1", GE, "2");
         final double solution = pb.solve();
+
+        final LCSystem system = new LCSystem(pb, solution);
+        System.out.println(system);
+
+        final LCSystem gaussSystem = system.clone();
+        final LCSystem daalmansSystem = system.clone();
+
+        PivotGauss pg = new PivotGauss(gaussSystem);
+        pg.applicationPivotGauss();
+        System.out.println(pg);
+
+        Daalmans daa = new Daalmans(daalmansSystem);
+        daa.run();
+        System.out.println(daa);
 
         // résultat attendu : -37.60000000
         Assertions.assertEquals(-37.6, solution, DELTA);
@@ -44,10 +60,15 @@ public class MLOProblemTest {
         System.out.println(system);
 
         final LCSystem gaussSystem = system.clone();
+        final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
         pg.applicationPivotGauss();
         System.out.println(pg);
+
+        Daalmans daa = new Daalmans(daalmansSystem);
+        daa.run();
+        System.out.println(daa);
 
         // résultat attendu -2.00000000
         Assertions.assertEquals(-2, solution, DELTA);
@@ -69,10 +90,15 @@ public class MLOProblemTest {
         System.out.println(system);
 
         final LCSystem gaussSystem = system.clone();
+        final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
         pg.applicationPivotGauss();
         System.out.println(pg);
+
+        Daalmans daa = new Daalmans(daalmansSystem);
+        daa.run();
+        System.out.println(daa);
 
         // résultat attendu : 0
         Assertions.assertEquals(0, solution, DELTA);
@@ -90,10 +116,15 @@ public class MLOProblemTest {
         System.out.println(system);
 
         final LCSystem gaussSystem = system.clone();
+        final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
         pg.applicationPivotGauss();
         System.out.println(pg);
+
+        Daalmans daa = new Daalmans(daalmansSystem);
+        daa.run();
+        System.out.println(daa);
 
         // résultat attendu : -5.00000000
         Assertions.assertEquals(-5, solution, DELTA);
@@ -114,12 +145,18 @@ public class MLOProblemTest {
         System.out.println(system);
 
         final LCSystem gaussSystem = system.clone();
+        final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
         pg.applicationPivotGauss();
         System.out.println(pg);
 
+        Daalmans daa = new Daalmans(daalmansSystem);
+        daa.run();
+        System.out.println(daa);
+
         // résultat attendu : 9
         Assertions.assertEquals(9, solution, DELTA);
+
     }
 }

@@ -31,7 +31,7 @@ public class Main {
             pg.applicationPivotGauss();
             System.out.println(pg);
 
-            System.out.println("------ Daalmans --------");
+            //System.out.println("------ Daalmans --------");
             Daalmans daa = new Daalmans(daalmansSystem);
             daa.run();
             System.out.println(daalmansSystem);

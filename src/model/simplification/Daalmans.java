@@ -267,4 +267,11 @@ public class Daalmans {
             return false;
         }
     }
+
+    @Override
+    public String toString() {
+        return "------ Daalmans ------" +
+                "\n" + system +
+                ' ';
+    }
 }
