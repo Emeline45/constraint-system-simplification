@@ -30,7 +30,8 @@ public class PivotGauss {
         }
         if(a != 0) {
             //Vérification que a1j n'est pas nul
-            if(system.getMatrix().get(0,a) != 0)
+            System.out.println(a);
+            if(system.getMatrix().get(a,0) != 0)
                 try {
                     echange(0, a); //échange du pivot si necessaire
                 } catch (LignePresenteException | LigneIdentiqueException e) {
