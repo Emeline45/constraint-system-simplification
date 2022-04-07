@@ -74,11 +74,14 @@ public class BorneSupInf {
                 taille = lcSystem.getMatrix().rowCount();
             }
 
-            lcSystem.getMatrix().appendRow(m.row(indiceMax));
-            lcSystem.appendIneqType(ineqs[indiceMax]);
-            lcSystem.getMatrix().appendRow(m.row(indiceMin));
-            lcSystem.appendIneqType(ineqs[indiceMin]);
-
+            if(indiceMax != -1) {
+                lcSystem.getMatrix().appendRow(m.row(indiceMax));
+                lcSystem.appendIneqType(ineqs[indiceMax]);
+            }
+            if(indiceMin != -1) {
+                lcSystem.getMatrix().appendRow(m.row(indiceMin));
+                lcSystem.appendIneqType(ineqs[indiceMin]);
+            }
         }
 
     }
