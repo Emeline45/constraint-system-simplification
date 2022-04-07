@@ -99,9 +99,11 @@ public class Matrix2 implements Iterable<Double[]>, Cloneable {
      * @param row la ligne à rajouter
      */
     public void appendRow(final Double[] row) {
-        assert(row.length == this.columnCount());
+        int columns = this.columnCount();
+        if (columns == 0)
+            columns = row.length;
 
-        final Double[][] newMatrix =  new Double[this.innerMatrix.length + 1][this.columnCount()];
+        final Double[][] newMatrix =  new Double[this.innerMatrix.length + 1][columns];
 
         System.arraycopy(this.innerMatrix, 0, newMatrix, 0, this.innerMatrix.length);
         System.arraycopy(row, 0, newMatrix[this.innerMatrix.length], 0, row.length);

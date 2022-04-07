@@ -262,7 +262,7 @@ public class Daalmans {
 
         try {
             this.solve(false, objective, system, isInfinite, isFeasable);
-            return isFeasable.get();
+            return isInfinite.get() || isFeasable.get();
         } catch (LpSolveException | NonResoluException e) {
             return false;
         }
