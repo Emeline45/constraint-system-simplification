@@ -149,7 +149,9 @@ public class LCSystem implements Cloneable {
         final int rowCount = this.matrix.rowCount();
         final int columnCount = this.matrix.columnCount();
         for (int i = 0; i < rowCount; ++i) {
-            if (i == 0) {
+            if (rowCount == 1) {
+                builder.append("⎨  ");
+            } else if (i == 0) {
                 builder.append("⎧  ");
             } else if (i == rowCount - 1) {
                 builder.append("⎩  ");
