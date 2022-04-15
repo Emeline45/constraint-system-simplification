@@ -44,6 +44,19 @@ public class TestAllPossibleAlgo {
         return String.format(fmt, nanos) + " " + currentUnit;
     }
 
+    private void showPercentage(final int x, final int nbRuns, final StringBuilder sb) {
+        final String nbRunsStringified = Integer.toString(nbRuns);
+
+        sb
+            .append(String.format("%" + nbRunsStringified.length() + "d", x))
+            .append("/")
+            .append(nbRuns)
+            .append("× (")
+            .append(String.format("%5.1f", (double) x / nbRuns * 100))
+            .append("% du temps")
+            .append(")");
+    }
+
     @Test
     public void testAll() throws ProblemeSansVariablesException, LpSolveException, TypeInegaliteInvalideException, NonResoluException {
         Runner r = new Runner();
@@ -141,8 +154,8 @@ public class TestAllPossibleAlgo {
                     final Runner.RunStatus r2 = stats2.get(k);
 
                     int comp = cmp.compare(r1.finalSystem, r2.finalSystem);
-                    if (comp < 0) nbTimesWorse++;
-                    else if (comp > 0) nbTimesBetter++;
+                    if (comp < 0) nbTimesBetter++;
+                    else if (comp > 0) nbTimesWorse++;
                     else nbTimesEqual++;
                 }
 
@@ -151,30 +164,15 @@ public class TestAllPossibleAlgo {
                         .append(" : ")
                         .append(method2.stream().map(Class::getSimpleName).collect(Collectors.toUnmodifiableList()))
                         .append("\n")
-                        .append("    Meilleure   : ")
-                        .append(nbTimesBetter)
-                        .append("/")
-                        .append(TEST_COUNT)
-                        .append("× (")
-                        .append(String.format("%3.1f", (double) nbTimesBetter / TEST_COUNT * 100))
-                        .append("% du temps")
-                        .append(")\n")
-                        .append("    Pire        : ")
-                        .append(nbTimesWorse)
-                        .append("/")
-                        .append(TEST_COUNT)
-                        .append("× (")
-                        .append(String.format("%3.1f", (double) nbTimesWorse / TEST_COUNT * 100))
-                        .append("% du temps")
-                        .append(")\n")
-                        .append("    Équivalente : ")
-                        .append(nbTimesEqual)
-                        .append("/")
-                        .append(TEST_COUNT)
-                        .append("× (")
-                        .append(String.format("%3.1f", (double) nbTimesEqual / TEST_COUNT * 100))
-                        .append("% du temps")
-                        .append(")\n");
+                        .append("    Meilleure   : ");
+                showPercentage(nbTimesBetter, TEST_COUNT, sb);
+                sb.append("\n")
+                        .append("    Pire        : ");
+                showPercentage(nbTimesWorse, TEST_COUNT, sb);
+                sb.append("\n")
+                        .append("    Équivalente : ");
+                showPercentage(nbTimesEqual, TEST_COUNT, sb);
+                sb.append("\n");
             }
         }
 

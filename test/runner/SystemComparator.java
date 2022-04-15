@@ -49,7 +49,7 @@ public class SystemComparator implements Comparator<LCSystem> {
         int sizeB1 = m1.rowCount();
         int sizeB2 = m2.rowCount();
 
-        if (nbZeroInO1 < nbZeroInO2 && sizeB1 <= sizeB2)
+        if (nbZeroInO1 > nbZeroInO2 && sizeB1 <= sizeB2)
             return -1;
 
         int nbEqInO1 = 0;
