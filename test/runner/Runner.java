@@ -5,6 +5,7 @@ import model.simplification.Daalmans;
 import model.simplification.PivotGauss;
 import model.simplification.Simplification;
 
+import java.lang.management.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Function;

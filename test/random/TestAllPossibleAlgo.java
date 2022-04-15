@@ -8,14 +8,10 @@ import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.simplification.Daalmans;
 import model.simplification.PivotGauss;
-import model.simplification.Simplification;
 import org.junit.jupiter.api.Test;
 import runner.Runner;
 import runner.SystemComparator;
 
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.FieldPosition;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,7 +20,7 @@ public class TestAllPossibleAlgo {
     /**
      * Le nombre de systèmes à générer pour la comparaison.
      */
-    private final int TEST_COUNT = 100;
+    private final static int SAMPLES_SIZE = 1000;
 
     private String getTimeFromNanos(double nanos, final String fmt) {
         String currentUnit = "ns";
@@ -37,13 +33,14 @@ public class TestAllPossibleAlgo {
             nanos /= 1000;
         }
         if (Math.abs(nanos) > 1000) {
-            currentUnit = "s";
+            currentUnit = " s";
             nanos /= 1000;
         }
 
         return String.format(fmt, nanos) + " " + currentUnit;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void showPercentage(final int x, final int nbRuns, final StringBuilder sb) {
         final String nbRunsStringified = Integer.toString(nbRuns);
 
@@ -55,6 +52,30 @@ public class TestAllPossibleAlgo {
             .append(String.format("%5.1f", (double) x / nbRuns * 100))
             .append("% du temps")
             .append(")");
+    }
+
+    private double[] computeMinMaxMeanStddev(final List<Long> times) {
+        final int n = times.size();
+
+        double mean = n > 0 ? times.get(0) : 0;
+        double msq = 0;
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+
+        double delta;
+        for (int j = 1; j < n; ++j) {
+            long time = times.get(j);
+
+            delta = time - mean;
+            mean += delta / j;
+            msq += delta * (time - mean);
+
+            min = Math.min(min, time);
+            max = Math.max(max, time);
+        }
+        double stddev = Math.sqrt(n > 0 ? msq / (n - 1) : 0);
+
+        return new double[] {min, max, mean, stddev};
     }
 
     @Test
@@ -70,7 +91,8 @@ public class TestAllPossibleAlgo {
         // TODO: afficher le facteur déterminant de la comparaison (nb contraintes, nb 0, ...) ?
 
         SystemGenerator s;
-        for (int i = 0; i < TEST_COUNT; ++i) {
+        for (int i = 0; i < SAMPLES_SIZE; ++i) {
+
             do {
                 s = new SystemGenerator(-1, 1);
             } while (!s.solveExist());
@@ -95,25 +117,11 @@ public class TestAllPossibleAlgo {
                     .map(stat -> stat.runtimeNanos)
                     .collect(Collectors.toUnmodifiableList());
 
-            int n = TEST_COUNT;
-
-            double mean = n > 0 ? times.get(0) : 0;
-            double msq = 0;
-            double min = Double.POSITIVE_INFINITY;
-            double max = Double.NEGATIVE_INFINITY;
-
-            double delta;
-            for (int j = 1; j < times.size(); ++j) {
-                long time = times.get(j);
-
-                delta = time - mean;
-                mean += delta / j;
-                msq += delta * (time - mean);
-
-                min = Math.min(min, time);
-                max = Math.max(max, time);
-            }
-            double stddev = Math.sqrt(n > 0 ? msq / (n - 1) : 0);
+            final double[] infos = computeMinMaxMeanStddev(times);
+            final double min = infos[0];
+            final double max = infos[1];
+            final double mean = infos[2];
+            final double stddev = infos[3];
 
             sb.append("Combinaison #")
                     .append(++nb)
@@ -123,9 +131,9 @@ public class TestAllPossibleAlgo {
                             .collect(Collectors.toUnmodifiableList()))
                     .append("\n")
                     .append("  [")
-                    .append(TEST_COUNT)
+                    .append(SAMPLES_SIZE)
                     .append(" runs]\n")
-                    .append("  Temps (moyenne ± σ) (min … max) : ")
+                    .append("  Temps (moyen ± σ) (min … max) : ")
                     .append("(")
                     .append(getTimeFromNanos(mean, "%5.1f"))
                     .append(" ± ")
@@ -159,19 +167,30 @@ public class TestAllPossibleAlgo {
                     else nbTimesEqual++;
                 }
 
+                final double[] infos_ = computeMinMaxMeanStddev(stats2.stream().map(stat -> stat.runtimeNanos).collect(Collectors.toUnmodifiableList()));
+                final double mean_ = infos_[2];
+                final double stddev_ = infos_[3];
+
                 sb.append("  VS combinaison #")
                         .append(nb_)
                         .append(" : ")
                         .append(method2.stream().map(Class::getSimpleName).collect(Collectors.toUnmodifiableList()))
                         .append("\n")
+                        .append("    Temps       : ")
+                        .append(String.format("%.2f", mean >= mean_ ? mean / mean_ : mean_ / mean))
+                        .append("× ± ")
+                        .append(String.format("%.2f", mean >= mean_ ? stddev / stddev_ : stddev_ / stddev))
+                        .append(" plus ")
+                        .append(mean <= mean_ ? "rapide" : "lent")
+                        .append("\n")
                         .append("    Meilleure   : ");
-                showPercentage(nbTimesBetter, TEST_COUNT, sb);
+                showPercentage(nbTimesBetter, SAMPLES_SIZE, sb);
                 sb.append("\n")
                         .append("    Pire        : ");
-                showPercentage(nbTimesWorse, TEST_COUNT, sb);
+                showPercentage(nbTimesWorse, SAMPLES_SIZE, sb);
                 sb.append("\n")
                         .append("    Équivalente : ");
-                showPercentage(nbTimesEqual, TEST_COUNT, sb);
+                showPercentage(nbTimesEqual, SAMPLES_SIZE, sb);
                 sb.append("\n");
             }
         }
