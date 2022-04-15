@@ -10,7 +10,25 @@ import model.simplification.Daalmans;
 import model.simplification.PivotGauss;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 public class TestAllPossibleAlgo {
+    @Test
+    public void testAll() throws ProblemeSansVariablesException, LpSolveException, TypeInegaliteInvalideException, NonResoluException {
+        SystemGenerator s;
+        do {
+            s = new SystemGenerator(-1, 1);
+        } while (!s.solveExist());
+
+        final LCSystem system = new LCSystem(s.getPb(), s.getSolve());
+        Runner r = new Runner();
+
+        List<Runner.RunStatus> results = r.run(system);
+
+        for (Runner.RunStatus st : results) {
+            System.out.println(st);
+        }
+    }
 
     @Test
     public void test1() throws ProblemeSansVariablesException, LpSolveException, TypeInegaliteInvalideException, NonResoluException {
@@ -26,7 +44,7 @@ public class TestAllPossibleAlgo {
         final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
-        pg.applicationPivotGauss();
+        pg.run();
         System.out.println(pg);
 
         Daalmans daa = new Daalmans(daalmansSystem);
@@ -53,7 +71,7 @@ public class TestAllPossibleAlgo {
             final LCSystem daalmansSystem = system.clone();
 
             PivotGauss pg = new PivotGauss(gaussSystem);
-            pg.applicationPivotGauss();
+            pg.run();
             System.out.println(pg);
 
             Daalmans daa = new Daalmans(daalmansSystem);

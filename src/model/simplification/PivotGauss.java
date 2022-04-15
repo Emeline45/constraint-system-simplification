@@ -6,17 +6,16 @@ import lpsolve.LpSolve;
 import model.LCSystem;
 import model.Matrix2;
 
-public class PivotGauss {
-    private final LCSystem system;
+public class PivotGauss extends Simplification {
 
     public PivotGauss(LCSystem sys){
-        this.system = sys;
+        super(sys);
     }
 
     /**
      * Application du pivot de gauss sur le système
      */
-    public void applicationPivotGauss(){
+    public void run(){
         //récupération de la longueur d'une ligne
         int n = system.getMatrix().columnCount();
         //récupération du nombre de lignes (contraintes)

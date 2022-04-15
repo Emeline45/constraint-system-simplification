@@ -34,7 +34,7 @@ public class MLOProblemTest {
         final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
-        pg.applicationPivotGauss();
+        pg.run();
         System.out.println(pg);
 
         Daalmans daa = new Daalmans(daalmansSystem);
@@ -63,7 +63,7 @@ public class MLOProblemTest {
         final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
-        pg.applicationPivotGauss();
+        pg.run();
         System.out.println(pg);
 
         Daalmans daa = new Daalmans(daalmansSystem);
@@ -93,7 +93,7 @@ public class MLOProblemTest {
         final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
-        pg.applicationPivotGauss();
+        pg.run();
         System.out.println(pg);
 
         Daalmans daa = new Daalmans(daalmansSystem);
@@ -119,7 +119,7 @@ public class MLOProblemTest {
         final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
-        pg.applicationPivotGauss();
+        pg.run();
         System.out.println(pg);
 
         Daalmans daa = new Daalmans(daalmansSystem);
@@ -148,7 +148,7 @@ public class MLOProblemTest {
         final LCSystem daalmansSystem = system.clone();
 
         PivotGauss pg = new PivotGauss(gaussSystem);
-        pg.applicationPivotGauss();
+        pg.run();
         System.out.println(pg);
 
         Daalmans daa = new Daalmans(daalmansSystem);

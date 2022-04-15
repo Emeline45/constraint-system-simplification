@@ -15,11 +15,9 @@ import java.util.Arrays;
 
 import static model.MLOProblem.*;
 
-public class Daalmans {
+public class Daalmans extends Simplification {
     private final static double DELTA = 0.00000001;
     private final static double EPSILON = 0.00001;
-
-    private final LCSystem system;
 
     /**
      * Initialise les algorithmes de Daalmans avec un système de contraintes linéaires.
@@ -29,16 +27,7 @@ public class Daalmans {
      * @param originalSystem le système de contraintes initial
      */
     public Daalmans(final LCSystem originalSystem) {
-        this.system = originalSystem;
-    }
-
-    /**
-     * Retourne le système de contraintes linéaires utilisé par les algorithmes de Daalmans.
-     *
-     * @return un système de contraintes linéaires
-     */
-    public LCSystem getSystem() {
-        return this.system;
+        super(originalSystem);
     }
 
     /**
@@ -47,7 +36,7 @@ public class Daalmans {
     public void run() {
         try {
             this.removeFixedVariables();
-            this.removeRedundantVariables();
+            this.removeRedundantConstraints();
         } catch (TypeInegaliteInvalideException | TailleLigneInvalideException | ProblemeSansVariablesException e) {
             e.printStackTrace();
         }
@@ -191,7 +180,7 @@ public class Daalmans {
      * @throws TailleLigneInvalideException
      * @throws ProblemeSansVariablesException
      */
-    private void removeRedundantVariables() throws TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
+    private void removeRedundantConstraints() throws TypeInegaliteInvalideException, TailleLigneInvalideException, ProblemeSansVariablesException {
         final Matrix2 matrix = this.system.getMatrix();
 
         // détail d'implantation :
