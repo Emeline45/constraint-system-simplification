@@ -145,6 +145,8 @@ public class Daalmans extends Simplification {
             }
 
             if (Math.abs(solMax - solMin) < DELTA) {
+                if (Config.VERBOSE) System.err.println("  = Variable " + n + " redondante");
+
                 // variable redondante
                 for (int i = 0; i < matrix.rowCount(); ++i) {
                     final Double[] row = matrix.row(i);
@@ -193,8 +195,8 @@ public class Daalmans extends Simplification {
             boolean result = true;
 
             final LCSystem tmp = this.system.clone();
-            final int ineqType = tmp.getIneqTypes()[i];
-            final Double[] row = tmp.getMatrix().row(i);
+            final int ineqType = this.system.getIneqTypes()[i];
+            final Double[] row = this.system.getMatrix().row(i);
 
             tmp.removeConstraint(i);
 
@@ -236,6 +238,8 @@ public class Daalmans extends Simplification {
                 }
             }
 
+            if (Config.VERBOSE) System.err.println("  = Redondante ? " + !result);
+
             if (!result) {
                 this.system.removeConstraint(i);
             }
@@ -251,7 +255,7 @@ public class Daalmans extends Simplification {
 
         try {
             this.solve(false, objective, system, isInfinite, isFeasable);
-            return isInfinite.get() || isFeasable.get();
+            return isFeasable.get();
         } catch (LpSolveException | NonResoluException e) {
             return false;
         }
