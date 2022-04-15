@@ -53,7 +53,6 @@ public class TestAllPossibleAlgo {
                 perms.stream()
                         .collect(Collectors.toMap(Function.identity(), _l -> new ArrayList<Runner.RunStatus>())));
 
-        // TODO: comparer globalement toutes les méthodes (nb fois meilleure, pire, équivalente, ...)
         // TODO: afficher les différences de temps entre chaque méthode
         // TODO: afficher le facteur déterminant de la comparaison (nb contraintes, nb 0, ...) ?
 
@@ -72,6 +71,7 @@ public class TestAllPossibleAlgo {
         }
 
         StringBuilder sb = new StringBuilder();
+        final SystemComparator cmp = new SystemComparator();
 
         int nb = 0;
         for (var entry : globalStatus.entrySet()) {
@@ -82,7 +82,7 @@ public class TestAllPossibleAlgo {
                     .map(stat -> stat.runtimeNanos)
                     .collect(Collectors.toUnmodifiableList());
 
-            int n = times.size();
+            int n = TEST_COUNT;
 
             double mean = n > 0 ? times.get(0) : 0;
             double msq = 0;
@@ -122,53 +122,63 @@ public class TestAllPossibleAlgo {
                     .append(" … ")
                     .append(getTimeFromNanos(max, "%.1f"))
                     .append(")\n");
+
+            // comparaison aux autres combinaisons
+            int nb_ = 0;
+            for (var entry2 : globalStatus.entrySet()) {
+                nb_++;
+                var method2 = entry2.getKey();
+                var stats2 = entry2.getValue();
+
+                if (method2 == method)
+                    continue;
+
+                int nbTimesBetter = 0;
+                int nbTimesWorse = 0;
+                int nbTimesEqual = 0;
+                for (int k = 0; k < Math.min(stats.size(), stats2.size()); ++k) {
+                    final Runner.RunStatus r1 = stats.get(k);
+                    final Runner.RunStatus r2 = stats2.get(k);
+
+                    int comp = cmp.compare(r1.finalSystem, r2.finalSystem);
+                    if (comp < 0) nbTimesWorse++;
+                    else if (comp > 0) nbTimesBetter++;
+                    else nbTimesEqual++;
+                }
+
+                sb.append("  VS combinaison #")
+                        .append(nb_)
+                        .append(" : ")
+                        .append(method2.stream().map(Class::getSimpleName).collect(Collectors.toUnmodifiableList()))
+                        .append("\n")
+                        .append("    Meilleure   : ")
+                        .append(nbTimesBetter)
+                        .append("/")
+                        .append(TEST_COUNT)
+                        .append("× (")
+                        .append(String.format("%3.1f", (double) nbTimesBetter / TEST_COUNT * 100))
+                        .append("% du temps")
+                        .append(")\n")
+                        .append("    Pire        : ")
+                        .append(nbTimesWorse)
+                        .append("/")
+                        .append(TEST_COUNT)
+                        .append("× (")
+                        .append(String.format("%3.1f", (double) nbTimesWorse / TEST_COUNT * 100))
+                        .append("% du temps")
+                        .append(")\n")
+                        .append("    Équivalente : ")
+                        .append(nbTimesEqual)
+                        .append("/")
+                        .append(TEST_COUNT)
+                        .append("× (")
+                        .append(String.format("%3.1f", (double) nbTimesEqual / TEST_COUNT * 100))
+                        .append("% du temps")
+                        .append(")\n");
+            }
         }
 
         System.out.println(sb);
-
-
-
-
-
-
-//        final SystemComparator comp = new SystemComparator();
-//        results.sort((r1, r2) -> comp.compare(r1.finalSystem, r2.finalSystem));
-//
-//        System.out.println("Sur le système :\n" + system);
-//
-//        for (int i = 0; i < results.size(); ++i) {
-//            Runner.RunStatus status = results.get(i);
-//
-//            StringBuilder msg = new StringBuilder();
-//            msg.append("Méthode ")
-//                    .append(status.order)
-//                    .append("\n")
-//                    .append("- Temps d'exécution : ")
-//                    .append(getTimeFromNanos(status.runtimeNanos))
-//                    .append("\n")
-//                    .append("- Comparaison détaillée :\n");
-//
-//            for (int j = 0; j < results.size(); ++j) {
-//                if (j == i) continue;
-//
-//                Runner.RunStatus status1 = results.get(j);
-//
-//                int c = comp.compare(status1.finalSystem, status.finalSystem);
-//
-//                msg.append("    - Contre méthode ")
-//                        .append(status1.order)
-//                        .append("\n")
-//                        .append("      ")
-//                        .append(c < 0 ? "Moins bonne simplification" : c == 0 ? "Simplification équivalente" : "Meilleure simplification")
-//                        .append("\n");
-//            }
-//
-//            System.out.println(msg);
-//        }
-//
-//        for (Runner.RunStatus st : results) {
-//            System.out.println(st);
-//        }
     }
 
     @Test
