@@ -18,7 +18,7 @@ import java.util.stream.Stream;
  */
 public class Runner {
     private final Class<Simplification>[] algorithms;
-    private final Stream<Stream<Class<Simplification>>> permutations;
+    private final List<List<Class<Simplification>>> permutations;
 
     public Runner() {
         //noinspection unchecked
@@ -28,7 +28,9 @@ public class Runner {
 
         this.permutations = IntStream.rangeClosed(1, this.algorithms.length)
                 .mapToObj(i -> this.permutations(i, this.algorithms))
-                .flatMap(s -> s.stream().map(List::stream));
+                .filter(l -> !l.isEmpty())
+                .flatMap(Collection::stream)
+                .collect(Collectors.toUnmodifiableList());
     }
 
     //////////////////////////
@@ -41,8 +43,17 @@ public class Runner {
      *               Attention, celui-ci n'est pas modifié pendant l'exécution.
      * @return une liste de résultat d'exécution pour chaque méthode
      */
-    public List<RunStatus> run(final LCSystem system) {
+    public Stream<RunStatus> run(final LCSystem system) {
         return this.forEach(l -> this.runOn(l, system.clone()));
+    }
+
+    /**
+     * Retourne toutes les combinaisons de simplification.
+     *
+     * @return une liste contenant toutes les permutations
+     */
+    public List<List<Class<Simplification>>> getPermutations() {
+        return new ArrayList<>(permutations);
     }
 
     /**
@@ -88,10 +99,8 @@ public class Runner {
      *
      *         Tout élément <code>null</code> est enlevé de cette liste.
      */
-    private <T> List<T> forEach(Function<List<Class<Simplification>>, T> runner) {
-        return this.permutations.map(s -> runner.apply(s.collect(Collectors.toUnmodifiableList())))
-                .filter(o -> !Objects.isNull(o))
-                .collect(Collectors.toList());
+    private <T> Stream<T> forEach(Function<List<Class<Simplification>>, T> runner) {
+        return this.permutations.stream().map(runner).filter(o -> !Objects.isNull(o));
     }
 
     /**
@@ -149,6 +158,7 @@ public class Runner {
             this.order = order;
         }
 
+        @SuppressWarnings("StringBufferReplaceableByString")
         @Override
         public String toString() {
             final StringBuilder builder = new StringBuilder();

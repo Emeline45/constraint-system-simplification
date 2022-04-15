@@ -29,7 +29,7 @@ public class PivotGauss extends Simplification {
         }
         if(a != 0) {
             //Vérification que a1j n'est pas nul
-            System.out.println(a);
+            //System.out.println(a);
             if(system.getMatrix().get(a,0) != 0)
                 try {
                     echange(0, a); //échange du pivot si necessaire

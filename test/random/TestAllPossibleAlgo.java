@@ -8,85 +8,163 @@ import lpsolve.LpSolveException;
 import model.LCSystem;
 import model.simplification.Daalmans;
 import model.simplification.PivotGauss;
+import model.simplification.Simplification;
 import org.junit.jupiter.api.Test;
 import runner.Runner;
 import runner.SystemComparator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TestAllPossibleAlgo {
-    private String getTimeFromNanos(final long nanos) {
-        double nanos_ = (double) nanos;
+    /**
+     * Le nombre de systèmes à générer pour la comparaison.
+     */
+    private final int TEST_COUNT = 100;
+
+    private String getTimeFromNanos(double nanos, final String fmt) {
         String currentUnit = "ns";
-        if (Math.abs(nanos_) > 1000) {
+        if (Math.abs(nanos) > 1000) {
             currentUnit = "µs";
-            nanos_ /= 1000;
+            nanos /= 1000;
         }
-        if (Math.abs(nanos_) > 1000) {
+        if (Math.abs(nanos) > 1000) {
             currentUnit = "ms";
-            nanos_ /= 1000;
+            nanos /= 1000;
         }
-        if (Math.abs(nanos_) > 1000) {
+        if (Math.abs(nanos) > 1000) {
             currentUnit = "s";
-            nanos_ /= 1000;
+            nanos /= 1000;
         }
 
-        return nanos_ + currentUnit;
+        return String.format(fmt, nanos) + " " + currentUnit;
     }
 
     @Test
     public void testAll() throws ProblemeSansVariablesException, LpSolveException, TypeInegaliteInvalideException, NonResoluException {
-        SystemGenerator s;
-        do {
-            s = new SystemGenerator(-1, 1);
-        } while (!s.solveExist());
-
-        final LCSystem system = new LCSystem(s.getPb(), s.getSolve());
         Runner r = new Runner();
+        var perms = r.getPermutations();
 
-        List<Runner.RunStatus> results = r.run(system);
+        var globalStatus = new HashMap<>(
+                perms.stream()
+                        .collect(Collectors.toMap(Function.identity(), _l -> new ArrayList<Runner.RunStatus>())));
 
-        final SystemComparator comp = new SystemComparator();
-        results.sort((r1, r2) -> comp.compare(r1.finalSystem, r2.finalSystem));
-
-        // TODO: généraliser à X systèmes
-        // TODO: faire inf, sup, moyenne des temps d'exécution sur X systèmes
         // TODO: comparer globalement toutes les méthodes (nb fois meilleure, pire, équivalente, ...)
         // TODO: afficher les différences de temps entre chaque méthode
-        // TODO: afficher le facteur déterminant de la comparaison (nb contraintes, nb 0, ...) ?r
-        System.out.println("Sur le système :\n" + system);
+        // TODO: afficher le facteur déterminant de la comparaison (nb contraintes, nb 0, ...) ?
 
-        for (int i = 0; i < results.size(); ++i) {
-            Runner.RunStatus status = results.get(i);
+        SystemGenerator s;
+        for (int i = 0; i < TEST_COUNT; ++i) {
+            do {
+                s = new SystemGenerator(-1, 1);
+            } while (!s.solveExist());
 
-            StringBuilder msg = new StringBuilder();
-            msg.append("Méthode ")
-                    .append(status.order)
-                    .append("\n")
-                    .append("- Temps d'exécution : ")
-                    .append(getTimeFromNanos(status.runtimeNanos))
-                    .append("\n")
-                    .append("- Comparaison détaillée :\n");
+            final LCSystem system = new LCSystem(s.getPb(), s.getSolve());
+            List<Runner.RunStatus> results = r.run(system).collect(Collectors.toList());
 
-            for (int j = 0; j < results.size(); ++j) {
-                if (j == i) continue;
-
-                Runner.RunStatus status1 = results.get(j);
-
-                int c = comp.compare(status1.finalSystem, status.finalSystem);
-
-                msg.append("    - Contre méthode ")
-                        .append(status1.order)
-                        .append("\n")
-                        .append("      ")
-                        .append(c < 0 ? "Moins bonne simplification" : c == 0 ? "Simplification équivalente" : "Meilleure simplification")
-                        .append("\n");
+            for (Runner.RunStatus stat : results) {
+                globalStatus.get(stat.order).add(stat);
             }
-
-            System.out.println(msg);
         }
+
+        StringBuilder sb = new StringBuilder();
+
+        int nb = 0;
+        for (var entry : globalStatus.entrySet()) {
+            var method = entry.getKey();
+            var stats = entry.getValue();
+
+            var times = stats.stream()
+                    .map(stat -> stat.runtimeNanos)
+                    .collect(Collectors.toUnmodifiableList());
+
+            int n = times.size();
+
+            double mean = n > 0 ? times.get(0) : 0;
+            double msq = 0;
+            double min = Double.POSITIVE_INFINITY;
+            double max = Double.NEGATIVE_INFINITY;
+
+            double delta;
+            for (int j = 1; j < times.size(); ++j) {
+                long time = times.get(j);
+
+                delta = time - mean;
+                mean += delta / j;
+                msq += delta * (time - mean);
+
+                min = Math.min(min, time);
+                max = Math.max(max, time);
+            }
+            double stddev = Math.sqrt(n > 0 ? msq / (n - 1) : 0);
+
+            sb.append("Combinaison #")
+                    .append(++nb)
+                    .append(" : ")
+                    .append(method.stream()
+                            .map(Class::getSimpleName)
+                            .collect(Collectors.toUnmodifiableList()))
+                    .append("\n")
+                    .append("  [")
+                    .append(TEST_COUNT)
+                    .append(" runs]\n")
+                    .append("  Temps (moyenne ± σ) (min … max) : ")
+                    .append("(")
+                    .append(getTimeFromNanos(mean, "%5.1f"))
+                    .append(" ± ")
+                    .append(getTimeFromNanos(stddev, "%5.1f"))
+                    .append(") (")
+                    .append(getTimeFromNanos(min, "%.1f"))
+                    .append(" … ")
+                    .append(getTimeFromNanos(max, "%.1f"))
+                    .append(")\n");
+        }
+
+        System.out.println(sb);
+
+
+
+
+
+
+//        final SystemComparator comp = new SystemComparator();
+//        results.sort((r1, r2) -> comp.compare(r1.finalSystem, r2.finalSystem));
+//
+//        System.out.println("Sur le système :\n" + system);
+//
+//        for (int i = 0; i < results.size(); ++i) {
+//            Runner.RunStatus status = results.get(i);
+//
+//            StringBuilder msg = new StringBuilder();
+//            msg.append("Méthode ")
+//                    .append(status.order)
+//                    .append("\n")
+//                    .append("- Temps d'exécution : ")
+//                    .append(getTimeFromNanos(status.runtimeNanos))
+//                    .append("\n")
+//                    .append("- Comparaison détaillée :\n");
+//
+//            for (int j = 0; j < results.size(); ++j) {
+//                if (j == i) continue;
+//
+//                Runner.RunStatus status1 = results.get(j);
+//
+//                int c = comp.compare(status1.finalSystem, status.finalSystem);
+//
+//                msg.append("    - Contre méthode ")
+//                        .append(status1.order)
+//                        .append("\n")
+//                        .append("      ")
+//                        .append(c < 0 ? "Moins bonne simplification" : c == 0 ? "Simplification équivalente" : "Meilleure simplification")
+//                        .append("\n");
+//            }
+//
+//            System.out.println(msg);
+//        }
 //
 //        for (Runner.RunStatus st : results) {
 //            System.out.println(st);
@@ -96,8 +174,8 @@ public class TestAllPossibleAlgo {
     @Test
     public void test1() throws ProblemeSansVariablesException, LpSolveException, TypeInegaliteInvalideException, NonResoluException {
         SystemGenerator s = new SystemGenerator(-1, 1);
-        while(!s.solveExist()) {
-            s = new SystemGenerator(- 1, 1);
+        while (!s.solveExist()) {
+            s = new SystemGenerator(-1, 1);
 
         }
         final LCSystem system = new LCSystem(s.getPb(), s.getSolve());
@@ -120,13 +198,13 @@ public class TestAllPossibleAlgo {
         int sum = 0;
         int[] nb = new int[15];
 
-        while (sum != 100){
+        while (sum != 100) {
             SystemGenerator s = new SystemGenerator(-1, 1);
             while (!s.solveExist()) {
                 s = new SystemGenerator(-1, 1);
 
             }
-            sum +=1;
+            sum += 1;
             final LCSystem system = new LCSystem(s.getPb(), s.getSolve());
             System.out.println(system);
 
@@ -143,38 +221,38 @@ public class TestAllPossibleAlgo {
 
             int sum1EQ = 0;
             int sum2EQ = 0;
-            for (int a: gaussSystem.getIneqTypes()) {
-                if(a == LpSolve.EQ)
+            for (int a : gaussSystem.getIneqTypes()) {
+                if (a == LpSolve.EQ)
                     sum1EQ += 1;
             }
-            for (int a: daalmansSystem.getIneqTypes()) {
-                if(a == LpSolve.EQ)
+            for (int a : daalmansSystem.getIneqTypes()) {
+                if (a == LpSolve.EQ)
                     sum2EQ += 1;
             }
-            if(sum1EQ > sum2EQ)
+            if (sum1EQ > sum2EQ)
                 nb[0] += 1;
-            else if(sum2EQ > sum1EQ)
+            else if (sum2EQ > sum1EQ)
                 nb[1] += 1;
-            else{
+            else {
                 int sum1_0 = 0;
                 int sum2_0 = 0;
-                for(int i = 0; i < gaussSystem.getMatrix().rowCount(); i++){
-                    for(int j = 0; j < gaussSystem.getMatrix().columnCount(); j++){
-                        if(gaussSystem.getMatrix().get(i,j) == 0)
+                for (int i = 0; i < gaussSystem.getMatrix().rowCount(); i++) {
+                    for (int j = 0; j < gaussSystem.getMatrix().columnCount(); j++) {
+                        if (gaussSystem.getMatrix().get(i, j) == 0)
                             sum1_0 += 1;
                     }
                 }
-                for(int i = 0; i < gaussSystem.getMatrix().rowCount(); i++){
-                    for(int j = 0; j < gaussSystem.getMatrix().columnCount(); j++){
-                        if(gaussSystem.getMatrix().get(i,j) == 0)
+                for (int i = 0; i < gaussSystem.getMatrix().rowCount(); i++) {
+                    for (int j = 0; j < gaussSystem.getMatrix().columnCount(); j++) {
+                        if (gaussSystem.getMatrix().get(i, j) == 0)
                             sum2_0 += 1;
                     }
                 }
-                if(sum1_0 > sum2_0 && gaussSystem.getMatrix().rowCount() < daalmansSystem.getMatrix().rowCount())
+                if (sum1_0 > sum2_0 && gaussSystem.getMatrix().rowCount() < daalmansSystem.getMatrix().rowCount())
                     nb[0] += 1;
-                else if(sum1_0 < sum2_0 && gaussSystem.getMatrix().rowCount() > daalmansSystem.getMatrix().rowCount())
+                else if (sum1_0 < sum2_0 && gaussSystem.getMatrix().rowCount() > daalmansSystem.getMatrix().rowCount())
                     nb[1] += 1;
-                else{
+                else {
                     nb[3] += 1; //nb[1] += 1;
                 }
             }

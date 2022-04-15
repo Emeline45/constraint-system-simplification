@@ -26,7 +26,11 @@ public class BorneSupInf {
     public void borneSupInf(){
         int N = lcSystem.getMatrix().rowCount(); //Parcours des contraintes
         int n = lcSystem.getMatrix().columnCount(); //Parcours des variables
-        int nbVar =  n - 2;
+        int nbVar =  n - 1;
+
+        if (nbVar <= 0)
+            return;
+
         double valMax = Double.MAX_VALUE;
         double valMin = Double.MIN_VALUE;
         int indiceMax = -1;
