@@ -1,4 +1,4 @@
-package random;
+package runner;
 
 import model.LCSystem;
 import model.simplification.Daalmans;
@@ -12,6 +12,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * Classe permettant de faire tourner toutes les combinaisons de simplifications
+ * possibles.
+ */
 public class Runner {
     private final Class<Simplification>[] algorithms;
     private final Stream<Stream<Class<Simplification>>> permutations;
@@ -27,6 +31,40 @@ public class Runner {
                 .flatMap(s -> s.stream().map(List::stream));
     }
 
+    //////////////////////////
+
+    /**
+     * Fais tourner toutes les simplifications sur le système en entrée.
+     *
+     * @param system le système en entrée de toutes les simplifications.
+     *
+     *               Attention, celui-ci n'est pas modifié pendant l'exécution.
+     * @return une liste de résultat d'exécution pour chaque méthode
+     */
+    public List<RunStatus> run(final LCSystem system) {
+        return this.forEach(l -> this.runOn(l, system.clone()));
+    }
+
+    /**
+     * Génère toutes les permutations de taille <code>k</code> du tableau donné.
+     *
+     * @param size la taille de chaque permutation
+     * @param objs le tableau contenant les éléments dont on veut les permutations
+     * @param <E> le type des éléments dans le tableau
+     * @return une liste contenant toutes les <code>k</code>-permutations
+     */
+    private <E> List<List<E>> permutations(final int size, final E[] objs) {
+        return permK(new ArrayList<>(Arrays.asList(objs)), 0, size);
+    }
+
+    /**
+     * Génère récursivement toutes les permutations de taille <code>k</code>.
+     * @param p la liste contenant les éléments à permuter
+     * @param i
+     * @param k la taille des permutations
+     * @param <E> le type des éléments dans la liste
+     * @return une liste contenant toutes les <code>k</code>-permutations
+     */
     private static <E> List<List<E>> permK(List<E> p, int i, int k) {
         if (i == k) {
             return List.of(new ArrayList<>(p.subList(0, k)));
@@ -41,22 +79,30 @@ public class Runner {
         return perms;
     }
 
-    //////////////////////////
-
-    public List<RunStatus> run(final LCSystem system) {
-        return this.forEach(l -> this.runOn(l, system.clone()));
-    }
-
-    private <E> List<List<E>> permutations(final int size, final E[] objs) {
-        return permK(new ArrayList<>(Arrays.asList(objs)), 0, size);
-    }
-
+    /**
+     * Applique une action sur toutes les permutations.
+     *
+     * @param runner l'action à appliquer, prenant en paramètre la liste des simplifications à exécuter
+     * @param <T> le type de retour de l'action
+     * @return une liste contenant tous les résultats de chaque action
+     *
+     *         Tout élément <code>null</code> est enlevé de cette liste.
+     */
     private <T> List<T> forEach(Function<List<Class<Simplification>>, T> runner) {
         return this.permutations.map(s -> runner.apply(s.collect(Collectors.toUnmodifiableList())))
                 .filter(o -> !Objects.isNull(o))
-                .collect(Collectors.toUnmodifiableList());
+                .collect(Collectors.toList());
     }
 
+    /**
+     * Exécute une combinaison de simplification sur le système de contraintes linéaires donné.
+     *
+     * @param simpls la combinaison de simplification
+     * @param system le système de contraintes linéaires considéré
+     *
+     *               Attention, celui-ci est modifié par cette méthode
+     * @return un statut d'exécution de cette simplification (<code>null</code> si aucune simplification n'a pu être exécutée)
+     */
     private RunStatus runOn(final List<Class<Simplification>> simpls, final LCSystem system) {
         List<Simplification> simplifications = simpls.stream().map(c -> {
                     try {
@@ -80,9 +126,21 @@ public class Runner {
         return new RunStatus(endingTime - startingTime, system, simpls);
     }
 
+    /**
+     * Une classe contenant les résultats d'une exécution d'une simplification.
+     */
     public static class RunStatus {
+        /**
+         * Le nombre de nanosecondes nécessaires au calcul.
+         */
         public final long runtimeNanos;
+        /**
+         * Le système de contraintes linéaires final, résultat de l'application de la simplification.
+         */
         public final LCSystem finalSystem;
+        /**
+         * Les classes utilisées pour réaliser cette simplification, par ordre d'application.
+         */
         public final List<Class<Simplification>> order;
 
         public RunStatus(final long runtimeInNanos, final LCSystem system, final List<Class<Simplification>> order) {

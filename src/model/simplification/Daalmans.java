@@ -91,7 +91,7 @@ public class Daalmans extends Simplification {
             if (Config.VERBOSE) System.err.println("  - Solution : " + sol);
 
             if (isInfinite != null) {
-                final boolean isInfinite_ = pb.isUnbounded() || pb.isInfinite(sol);
+                final boolean isInfinite_ = pb.isUnbounded();
                 if (Config.VERBOSE) System.err.println("  - Est infinie : " + isInfinite_);
                 isInfinite.set(isInfinite_);
             }
