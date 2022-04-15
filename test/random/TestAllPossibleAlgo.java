@@ -169,18 +169,15 @@ public class TestAllPossibleAlgo {
 
                 final double[] infos_ = computeMinMaxMeanStddev(stats2.stream().map(stat -> stat.runtimeNanos).collect(Collectors.toUnmodifiableList()));
                 final double mean_ = infos_[2];
-                final double stddev_ = infos_[3];
 
                 sb.append("  VS combinaison #")
                         .append(nb_)
                         .append(" : ")
                         .append(method2.stream().map(Class::getSimpleName).collect(Collectors.toUnmodifiableList()))
                         .append("\n")
-                        .append("    Temps       : ")
-                        .append(String.format("%.2f", mean >= mean_ ? mean / mean_ : mean_ / mean))
-                        .append("× ± ")
-                        .append(String.format("%.2f", mean >= mean_ ? stddev / stddev_ : stddev_ / stddev))
-                        .append(" plus ")
+                        .append("    Temps       : environ ")
+                        .append(String.format("%.2f", Math.max(mean, mean_) / Math.min(mean, mean_)))
+                        .append("× plus ")
                         .append(mean <= mean_ ? "rapide" : "lent")
                         .append("\n")
                         .append("    Meilleure   : ");
