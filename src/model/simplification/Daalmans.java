@@ -17,14 +17,13 @@ import static model.MLOProblem.*;
 
 public class Daalmans extends Simplification {
     private final static double DELTA = 0.00000001;
-    private final static double EPSILON = 0.00001;
+    private final static double EPSILON = 0.0001;
 
     /**
      * Initialise les algorithmes de Daalmans avec un système de contraintes linéaires.
      *
-     * @implNote Attention : ce système sera modifié directement par les algorithmes.
-     *
      * @param originalSystem le système de contraintes initial
+     * @implNote Attention : ce système sera modifié directement par les algorithmes.
      */
     public Daalmans(final LCSystem originalSystem) {
         super(originalSystem);
@@ -36,6 +35,7 @@ public class Daalmans extends Simplification {
     public void run() {
         try {
             this.removeFixedVariables();
+            this.removeConstantConstraints();
             this.removeRedundantConstraints();
         } catch (TypeInegaliteInvalideException | TailleLigneInvalideException | ProblemeSansVariablesException e) {
             e.printStackTrace();
@@ -79,10 +79,12 @@ public class Daalmans extends Simplification {
                 row__[0] = 0.;
                 System.arraycopy(row_, 0, row__, 1, row_.length - 1);
 
-                if (Config.VERBOSE)
-                    System.err.println("    - [" + i + "]: " + Arrays.toString(row__) + " - " + system.getIneqTypes()[i] + " - " + row_[row_.length - 1]);
+                final int ineqty = system.getIneqTypes()[i];
 
-                pb.withConstraint(row__, system.getIneqTypes()[i], row_[row_.length - 1]);
+                if (Config.VERBOSE)
+                    System.err.println("    - [" + i + "]: " + Arrays.toString(row__) + (ineqty == EQ ? " = " : ineqty == LE ? " ⩽ " : " ⩾ ") + row_[row_.length - 1]);
+
+                pb.withConstraint(row__, ineqty, row_[row_.length - 1]);
             }
 
             pb.withVarTypes(system.getVarTypes());
@@ -132,12 +134,14 @@ public class Daalmans extends Simplification {
             double solMin, solMax;
             try {
                 final BooleanHolder minFeasable = new BooleanHolder();
+                final BooleanHolder minUnbounded = new BooleanHolder();
                 final BooleanHolder maxFeasable = new BooleanHolder();
+                final BooleanHolder maxUnbounded = new BooleanHolder();
 
-                solMin = this.solve(false, localObjective, null, minFeasable);
-                solMax = this.solve(true, localObjective, null, maxFeasable);
+                solMin = this.solve(false, localObjective, minUnbounded, minFeasable);
+                solMax = this.solve(true, localObjective, maxUnbounded, maxFeasable);
 
-                if (!minFeasable.get() || !maxFeasable.get())
+                if (!(minFeasable.get() || minUnbounded.get()) || !(maxFeasable.get() || maxUnbounded.get()))
                     continue;
             } catch (LpSolveException | NonResoluException e) {
                 e.printStackTrace();
@@ -165,6 +169,23 @@ public class Daalmans extends Simplification {
 
                 matrix.appendRow(newConstraint);
                 system.appendIneqType(EQ);
+            }
+        }
+    }
+
+    public void removeConstantConstraints() {
+        final Matrix2 matrix = this.system.getMatrix();
+
+        final int nbConstraints = matrix.rowCount();
+
+        for (int i = nbConstraints - 1; i >= 0; --i) {
+            final Double[] row = matrix.row(i);
+
+            if (Arrays.stream(row).limit(row.length - 1).allMatch(d -> Math.abs(d) <= DELTA)) {
+                if (Config.VERBOSE)
+                    System.err.println("Contrainte constante " + i + " retirée");
+
+                this.system.removeConstraint(i);
             }
         }
     }
@@ -215,7 +236,7 @@ public class Daalmans extends Simplification {
                     row[row.length - 1] = tmpResult - EPSILON;
                     tmp.setIneqTypes(tmp.getIneqTypes().length - 1, LE);
 
-                    result = result && this.isFeasible(tmp);
+                    result = result | this.isFeasible(tmp);
                     break;
                 }
                 case LE: {
@@ -253,9 +274,12 @@ public class Daalmans extends Simplification {
         final BooleanHolder isInfinite = new BooleanHolder();
         final BooleanHolder isFeasable = new BooleanHolder();
 
+        for (int i = 0; i < objective.length; ++i)
+            objective[i] = 0.;
+
         try {
             this.solve(false, objective, system, isInfinite, isFeasable);
-            return isFeasable.get();
+            return isInfinite.get() || isFeasable.get();
         } catch (LpSolveException | NonResoluException e) {
             return false;
         }

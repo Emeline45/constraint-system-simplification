@@ -1,5 +1,6 @@
 package model;
 
+import config.Config;
 import exceptions.problems.*;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
@@ -33,6 +34,10 @@ public final class MLOProblem implements Closeable {
         this.solver = LpSolve.makeLp(0, nbVars);
         this.solver.setVerbose(0);
         this.solver.setMinim();
+
+        for (int i = 0; i < nbVars; ++i) {
+            this.solver.setBounds(i + 1, -this.solver.getInfinite(), this.solver.getInfinite());
+        }
     }
 
     /**
@@ -147,6 +152,7 @@ public final class MLOProblem implements Closeable {
     public double solve() throws LpSolveException {
         this.solveStatus = this.solver.solve();
         this.solved = true;
+
         return this.solver.getObjective();
     }
 
