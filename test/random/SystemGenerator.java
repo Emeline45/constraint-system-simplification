@@ -52,7 +52,7 @@ public class SystemGenerator {
      */
     private void contraints() throws LpSolveException, TypeInegaliteInvalideException {
         int nbV = pb.getNbVars();
-        int nbC = random.nextInt(NBCV);
+        int nbC = random.nextInt(NBCV - 1) + 1;
 
         int[] tab = new int[]{LE, GE, EQ};
 

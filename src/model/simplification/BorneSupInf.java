@@ -1,90 +1,108 @@
 package model.simplification;
 
+import config.Config;
 import lpsolve.LpSolve;
 import model.LCSystem;
+import model.MLOProblem;
 import model.Matrix2;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class BorneSupInf {
+    private final static double DELTA = 0.00000001;
+
     private final LCSystem lcSystem;
-
-    private final Map<Integer, Double> max;
-    private final Map<Integer, Double> min;
-
 
     public BorneSupInf(LCSystem lcSystem){
         this.lcSystem = lcSystem;
-        this.min = new HashMap<>();
-        this.max = new HashMap<>();
     }
 
     /**
-     * Calcul la borne supérieur et inférieur des variables de la matrice
+     * Calcule la borne supérieure et inférieure des variables de la matrice
      */
     public void borneSupInf(){
-        int N = lcSystem.getMatrix().rowCount(); //Parcours des contraintes
-        int n = lcSystem.getMatrix().columnCount(); //Parcours des variables
-        int nbVar =  n - 1;
+        final Matrix2 matrix = lcSystem.getMatrix();
 
-        if (nbVar <= 0)
+        final int N = matrix.rowCount(); //Parcours des contraintes
+        final int n = matrix.columnCount(); //Parcours des variables
+        final int nbVar = n - 2;
+
+        // NOTE : ne devrait jamais arriver : uniquement si la matrice est vide !
+        if (nbVar < 0)
             return;
 
-        double valMax = Double.MAX_VALUE;
-        double valMin = Double.MIN_VALUE;
+        double valMax = Double.MIN_VALUE;
+        double valMin = Double.MAX_VALUE;
+
         int indiceMax = -1;
         int indiceMin = -1;
-        for(int i = nbVar; i < N; i++){
-            if(born(i, n)){
-                if(lcSystem.getIneqTypes()[i] == LpSolve.GE){
-                    max.put(i,lcSystem.getMatrix().get(i,n-1));
-                    valMax = lcSystem.getMatrix().get(i, n-1);
-                    indiceMax = i;
+        int indiceEq = -1;
+
+        for (int i = nbVar; i < N; ++i) {
+            if (!born(i, n))
+                continue;
+
+            if (Config.VERBOSE)
+                System.err.println("Borne sup/inf : contrainte " + i + " unitaire");
+
+            final int ineqty = lcSystem.getIneqTypes()[i];
+            final double value = matrix.get(i, n - 1);
+
+            if (Config.VERBOSE)
+                System.err.println("Borne sup/inf : " + (ineqty == MLOProblem.GE ? "⩾" : ineqty == MLOProblem.LE ? "⩽" : "=") + " " + value);
+
+            switch (ineqty) {
+                case MLOProblem.GE: {
+                    if (value > valMax) {
+                        indiceMax = i;
+                        valMax = value;
+                    }
+                    break;
                 }
-                else if (lcSystem.getIneqTypes()[i] == LpSolve.LE){
-                    min.put(i,lcSystem.getMatrix().get(i,n-1));
-                    valMin = lcSystem.getMatrix().get(i, n-1);
-                    indiceMin = i;
+                case MLOProblem.LE: {
+                    if (value < valMin) {
+                        indiceMin = i;
+                        valMin = value;
+                    }
+                    break;
                 }
+                case MLOProblem.EQ: {
+                    indiceEq = i;
+                    break;
+                }
+                default: {}
             }
         }
 
-        if(valMax != Double.MAX_VALUE){
-            for (Map.Entry<Integer, Double> entry : max.entrySet()) {
-                if(valMax < entry.getValue()){
-                    valMax = entry.getValue();
-                    indiceMax = entry.getKey();
-                }
-            }
-        }
-        if(valMin != Double.MIN_VALUE){
-            for (Map.Entry<Integer, Double> entry : min.entrySet()) {
-                if(valMin < entry.getValue()){
-                    valMin = entry.getValue();
-                    indiceMin = entry.getKey();
-                }
-            }
-        }
+        final Matrix2 m = this.lcSystem.getMatrix().clone();
+        final int[] ineqs = this.lcSystem.getIneqTypes().clone();
 
-        Matrix2 m = this.lcSystem.getMatrix().clone();
-        int[] ineqs = this.lcSystem.getIneqTypes().clone();
+        if (Config.VERBOSE) {
+            System.err.println("Borne sub/inf :\n" + this.lcSystem);
+            System.err.println("Borne sup/inf : minimum=" + indiceMin + "; maximum=" + indiceMax + "; égalité=" + indiceEq);
+        }
 
         int taille = N;
-        if(N > nbVar) {
-            while (taille != nbVar) {
+        if(taille > nbVar) {
+            while (taille > nbVar) {
                 //lcSystem.getMatrix().removeRow(taille - 1);
                 lcSystem.removeConstraint(taille - 1);
                 taille = lcSystem.getMatrix().rowCount();
             }
 
-            if(indiceMax != -1) {
-                lcSystem.getMatrix().appendRow(m.row(indiceMax));
-                lcSystem.appendIneqType(ineqs[indiceMax]);
-            }
-            if(indiceMin != -1) {
-                lcSystem.getMatrix().appendRow(m.row(indiceMin));
-                lcSystem.appendIneqType(ineqs[indiceMin]);
+            if (indiceEq != -1) {
+                lcSystem.getMatrix().appendRow(m.row(indiceEq));
+                lcSystem.appendIneqType(MLOProblem.EQ);
+            } else {
+                if (indiceMax != -1) {
+                    lcSystem.getMatrix().appendRow(m.row(indiceMax));
+                    lcSystem.appendIneqType(ineqs[indiceMax]);
+                }
+                if (indiceMin != -1) {
+                    lcSystem.getMatrix().appendRow(m.row(indiceMin));
+                    lcSystem.appendIneqType(ineqs[indiceMin]);
+                }
             }
         }
 
@@ -98,7 +116,7 @@ public class BorneSupInf {
      */
     private boolean born(int L, int n){
         for(int j = 0; j < n - 2; j++){
-            if(lcSystem.getMatrix().get(L,j) != 0)
+            if(Math.abs(lcSystem.getMatrix().get(L,j)) > DELTA)
                 return false;
         }
         return true;
