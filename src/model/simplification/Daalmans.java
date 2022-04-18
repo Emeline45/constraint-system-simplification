@@ -173,6 +173,9 @@ public class Daalmans extends Simplification {
         }
     }
 
+    /**
+     * Simple optimisation : retire toutes les contraintes où aucune variable n'est présente à gauche.
+     */
     public void removeConstantConstraints() {
         final Matrix2 matrix = this.system.getMatrix();
 
@@ -182,6 +185,8 @@ public class Daalmans extends Simplification {
             final Double[] row = matrix.row(i);
 
             if (Arrays.stream(row).limit(row.length - 1).allMatch(d -> Math.abs(d) <= DELTA)) {
+                //                 ^^^^^^^^^^^^^^^^^^^^^
+                //  On ne veut pas du coefficient dans `b`, qui est le dernier
                 if (Config.VERBOSE)
                     System.err.println("Contrainte constante " + i + " retirée");
 
