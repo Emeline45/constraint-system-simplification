@@ -79,7 +79,7 @@ public class TestAllPossibleAlgo {
     }
 
     @Test
-    public void testAll() throws ProblemeSansVariablesException, LpSolveException, TypeInegaliteInvalideException, NonResoluException {
+    public void testAndCompareAll() throws ProblemeSansVariablesException, LpSolveException, TypeInegaliteInvalideException, NonResoluException {
         Runner r = new Runner();
         var perms = r.getPermutations();
 
