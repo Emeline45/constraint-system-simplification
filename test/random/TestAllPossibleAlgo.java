@@ -20,7 +20,7 @@ public class TestAllPossibleAlgo {
     /**
      * Le nombre de systèmes à générer pour la comparaison.
      */
-    private final static int SAMPLES_SIZE = 1000;
+    private final static int SAMPLES_SIZE = 562;
 
     private String getTimeFromNanos(double nanos, final String fmt) {
         String currentUnit = "ns";
@@ -157,14 +157,22 @@ public class TestAllPossibleAlgo {
                 int nbTimesBetter = 0;
                 int nbTimesWorse = 0;
                 int nbTimesEqual = 0;
-                for (int k = 0; k < Math.min(stats.size(), stats2.size()); ++k) {
+                for (int k = 0; k < SAMPLES_SIZE; ++k) {
                     final Runner.RunStatus r1 = stats.get(k);
                     final Runner.RunStatus r2 = stats2.get(k);
 
-                    int comp = cmp.compare(r1.finalSystem, r2.finalSystem);
-                    if (comp < 0) nbTimesBetter++;
-                    else if (comp > 0) nbTimesWorse++;
-                    else nbTimesEqual++;
+                    final int comp1 = cmp.compare(r1.finalSystem, r2.finalSystem);
+                    final int comp2 = cmp.compare(r2.finalSystem, r1.finalSystem);
+
+                    if (comp1 < 0 && comp2 > 0) nbTimesBetter++;
+                    else if (comp1 > 0 && comp2 < 0) nbTimesWorse++;
+                    else if (comp1 == comp2) nbTimesEqual++;
+                    else {
+                        // NOTE : cela ne semble pas être affiché :)
+                        System.err.println("--- Comparaison incohérente ---");
+                        System.err.println(r1.finalSystem);
+                        System.err.println(r2.finalSystem);
+                    }
                 }
 
                 final double[] infos_ = computeMinMaxMeanStddev(stats2.stream().map(stat -> stat.runtimeNanos).collect(Collectors.toUnmodifiableList()));
