@@ -13,6 +13,7 @@ import static model.MLOProblem.*;
 
 public class SystemGenerator {
     private static final int NBCV = 10;
+    private static final boolean REAL_ONLY = true;
 
     private final MLOProblem pb;
     private double solve;
@@ -44,10 +45,12 @@ public class SystemGenerator {
         objectiv();
 
         //Ajout des variables réelles, entières ou mixtes
-        try {
-            varType();
-        } catch (TailleLigneInvalideException e) {
-            e.printStackTrace();
+        if(!REAL_ONLY){
+            try {
+                varType();
+            } catch (TailleLigneInvalideException e) {
+                e.printStackTrace();
+            }
         }
     }
 
