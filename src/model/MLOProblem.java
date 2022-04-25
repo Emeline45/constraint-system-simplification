@@ -131,10 +131,10 @@ public final class MLOProblem implements Closeable {
         for (int i = 0; i < types.length; ++i) {
             switch (types[i]) {
                 case INT:
-                    this.solver.setInt(i, true);
+                    this.solver.setInt(i+1, true);
                     break;
                 case BINARY:
-                    this.solver.setBinary(i, true);
+                    this.solver.setBinary(i+1, true);
                     break;
                 default:
                     // rien faire pour des variables entières

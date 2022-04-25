@@ -2,6 +2,7 @@ package random;
 
 import exceptions.problems.NonResoluException;
 import exceptions.problems.ProblemeSansVariablesException;
+import exceptions.problems.TailleLigneInvalideException;
 import exceptions.problems.TypeInegaliteInvalideException;
 import lpsolve.LpSolveException;
 import model.MLOProblem;
@@ -43,6 +44,11 @@ public class SystemGenerator {
         objectiv();
 
         //Ajout des variables réelles, entières ou mixtes
+        try {
+            varType();
+        } catch (TailleLigneInvalideException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -78,6 +84,19 @@ public class SystemGenerator {
             s.append(random.nextDouble() * (bornSup - bornInf) + bornInf).append(" ");
         }
         pb.withObjective(s.toString());
+    }
+
+    private void varType() throws TailleLigneInvalideException, LpSolveException {
+        VarType[] tab = new VarType[pb.getNbVars()];
+        for (int i = 0; i < pb.getNbVars(); i++){
+            int randomm = random.nextInt(2);
+            if(randomm == 0)
+                tab[i] = VarType.REAL;
+            else
+                tab[i] = VarType.INT;
+        }
+        //System.out.println(tab[0]);
+        pb.withVarTypes(tab);
     }
 
     /**
