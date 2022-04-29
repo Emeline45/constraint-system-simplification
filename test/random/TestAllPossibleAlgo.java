@@ -54,17 +54,17 @@ public class TestAllPossibleAlgo {
             .append(")");
     }
 
-    private double[] computeMinMaxMeanStddev(final List<Long> times) {
+    private <T extends Number> double[] computeMinMaxMeanStddev(final List<T> times) {
         final int n = times.size();
 
-        double mean = n > 0 ? times.get(0) : 0;
+        double mean = n > 0 ? times.get(0).doubleValue() : 0;
         double msq = 0;
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
 
         double delta;
         for (int j = 1; j < n; ++j) {
-            long time = times.get(j);
+            double time = times.get(j).doubleValue();
 
             delta = time - mean;
             mean += delta / j;
@@ -123,6 +123,15 @@ public class TestAllPossibleAlgo {
             final double mean = infos[2];
             final double stddev = infos[3];
 
+            var simplificationIndices = stats.stream()
+                    .map(stat -> stat.simpIndex)
+                    .collect(Collectors.toUnmodifiableList());
+
+            final double[] infos2 = computeMinMaxMeanStddev(simplificationIndices);
+            final double minIndex = infos2[0];
+            final double maxIndex = infos2[1];
+            final double meanIndex = infos2[2];
+
             sb.append("Combinaison #")
                     .append(++nb)
                     .append(" : ")
@@ -142,7 +151,14 @@ public class TestAllPossibleAlgo {
                     .append(getTimeFromNanos(min, "%.1f"))
                     .append(" … ")
                     .append(getTimeFromNanos(max, "%.1f"))
-                    .append(")\n");
+                    .append(")\n")
+                    .append("  Pourcentage de simplification moyen (min … max) : ")
+                    .append(String.format("%5.1f", meanIndex))
+                    .append("% (")
+                    .append(String.format("%5.1f", minIndex))
+                    .append("% … ")
+                    .append(String.format("%5.1f", maxIndex))
+                    .append("%)\n");
 
             // comparaison aux autres combinaisons
             int nb_ = 0;

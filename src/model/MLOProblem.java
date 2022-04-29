@@ -34,6 +34,7 @@ public final class MLOProblem implements Closeable {
         this.solver = LpSolve.makeLp(0, nbVars);
         this.solver.setVerbose(0);
         this.solver.setMinim();
+        this.solver.setTimeout(15);
 
         for (int i = 0; i < nbVars; ++i) {
             this.solver.setBounds(i + 1, -this.solver.getInfinite(), this.solver.getInfinite());
@@ -152,6 +153,11 @@ public final class MLOProblem implements Closeable {
     public double solve() throws LpSolveException {
         this.solveStatus = this.solver.solve();
         this.solved = true;
+
+        if (this.solveStatus == LpSolve.SUBOPTIMAL)
+            System.err.println("lp_solve returned suboptimal solution by lack of time");
+        if (this.solveStatus == LpSolve.TIMEOUT)
+            System.err.println("lp_solve was unable to find a real solution before the timeout");
 
         return this.solver.getObjective();
     }

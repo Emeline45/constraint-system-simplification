@@ -1,11 +1,11 @@
 package runner;
 
 import model.LCSystem;
+import model.Matrix2;
 import model.simplification.Daalmans;
 import model.simplification.PivotGauss;
 import model.simplification.Simplification;
 
-import java.lang.management.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Function;
@@ -18,6 +18,8 @@ import java.util.stream.Stream;
  * possibles.
  */
 public class Runner {
+    private final static double DELTA = 0.000000001;
+
     private final Class<Simplification>[] algorithms;
     private final List<List<Class<Simplification>>> permutations;
 
@@ -127,13 +129,49 @@ public class Runner {
         if (simplifications.isEmpty())
             return null;
 
+        double nb0In = 0;
+        final int initRowCount = system.getMatrix().rowCount();
+        final int initColumnCount = system.getMatrix().columnCount() - 1;
+        {
+            final Matrix2 matrix = system.getMatrix();
+            for (int i = 0; i < initRowCount; ++i) {
+                for (int j = 0; j < initColumnCount; ++j) {
+                    if (Math.abs(matrix.get(i, j)) <= DELTA)
+                        nb0In += 1;
+                }
+            }
+        }
+
         final long startingTime = System.nanoTime();
         for (Simplification simp : simplifications) {
             simp.run();
         }
         final long endingTime = System.nanoTime();
 
-        return new RunStatus(endingTime - startingTime, system, simpls);
+        double nb0Out = 0;
+        final int finalRowCount = system.getMatrix().rowCount();
+        final int finalColumnCount = system.getMatrix().columnCount() - 1;
+        {
+            final Matrix2 matrix = system.getMatrix();
+            for (int i = 0; i < initRowCount; ++i) {
+                if (i >= finalRowCount) {
+                    nb0Out += initColumnCount;
+                    continue;
+                }
+
+                for (int j = 0; j < initColumnCount; ++j) {
+                    if (j >= finalColumnCount)
+                        nb0Out += 1;
+                    if (Math.abs(matrix.get(i, j)) <= DELTA)
+                        nb0Out += 1;
+                }
+            }
+        }
+
+        final double matrixSize = initColumnCount * initRowCount;
+        final double index = (nb0Out / matrixSize - nb0In / matrixSize) * 100;
+
+        return new RunStatus(endingTime - startingTime, system, index, simpls);
     }
 
     /**
@@ -152,11 +190,16 @@ public class Runner {
          * Les classes utilisées pour réaliser cette simplification, par ordre d'application.
          */
         public final List<Class<Simplification>> order;
+        /**
+         * L'indice de simplification du système en entrée.
+         */
+        public final double simpIndex;
 
-        public RunStatus(final long runtimeInNanos, final LCSystem system, final List<Class<Simplification>> order) {
+        public RunStatus(final long runtimeInNanos, final LCSystem system, final double simplificationIndex, final List<Class<Simplification>> order) {
             this.runtimeNanos = runtimeInNanos;
             this.finalSystem = system.clone();
             this.order = order;
+            this.simpIndex = simplificationIndex;
         }
 
         @SuppressWarnings("StringBufferReplaceableByString")
