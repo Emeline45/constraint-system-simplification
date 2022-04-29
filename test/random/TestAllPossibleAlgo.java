@@ -20,7 +20,7 @@ public class TestAllPossibleAlgo {
     /**
      * Le nombre de systèmes à générer pour la comparaison.
      */
-    private final static int SAMPLES_SIZE = 562;
+    private final static int SAMPLES_SIZE = 100;
 
     private String getTimeFromNanos(double nanos, final String fmt) {
         String currentUnit = "ns";
